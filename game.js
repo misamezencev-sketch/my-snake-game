@@ -28,32 +28,37 @@ MenuScene.prototype = Object.create(Phaser.Scene.prototype);
 MenuScene.prototype.constructor = MenuScene;
 
 MenuScene.prototype.preload = function() {
-    // Загружаем фон из корня репозитория
-    this.load.image('menu_bg', 'bg.png');
+    // Убедись, что файл называется bg.png и лежит в корне репозитория
+    this.load.image('menu_bg', 'bg.png'); 
 };
 
 MenuScene.prototype.create = function() {
-    // Фон на весь экран
+    // Добавляем картинку меню
     this.add.image(400, 300, 'menu_bg').setDisplaySize(800, 600);
     
-    // Затемняем фон, чтобы текст было лучше видно
-    this.add.rectangle(400, 300, 800, 600, 0x000000, 0.5);
+    // Оставляем надпись с рекордом (в левом верхнем углу)
+    this.add.text(20, 20, 'Рекорд: ' + highScore, { 
+        fontSize: '32px', fill: '#ffffff', stroke: '#000000', strokeThickness: 4
+    });
 
-    this.add.text(400, 150, 'ЗМЕЙКА', { 
-        fontSize: '80px', fill: '#00ff00', fontWeight: 'bold'
-    }).setOrigin(0.5);
+    // --- НЕВИДИМАЯ КНОПКА ПОВЕРХ НАДПИСИ START ---
+    // Координаты (400, 520) и размер (200x80) подобраны под твою картинку.
+    // Если кнопка не нажимается, поменяй Y (сейчас 520) в большую или меньшую сторону.
+    let startButton = this.add.rectangle(400, 520, 200, 80, 0xffffff, 0); 
+    
+    startButton.setInteractive();
 
-    this.add.text(400, 250, 'Рекорд: ' + highScore, { 
-        fontSize: '32px', fill: '#ffffff' 
-    }).setOrigin(0.5);
+    startButton.on('pointerover', () => {
+        this.input.setDefaultCursor('pointer');
+        startButton.setFillStyle(0xffffff, 0.2); // Легкая подсветка при наведении
+    });
+    
+    startButton.on('pointerout', () => {
+        this.input.setDefaultCursor('default');
+        startButton.setFillStyle(0xffffff, 0);
+    });
 
-    let playButton = this.add.text(400, 400, 'ИГРАТЬ', { 
-        fontSize: '50px', fill: '#ffffff', backgroundColor: '#000000', padding: { x: 40, y: 20 }
-    }).setOrigin(0.5).setInteractive();
-
-    playButton.on('pointerover', () => playButton.setStyle({ fill: '#00ff00' }));
-    playButton.on('pointerout', () => playButton.setStyle({ fill: '#ffffff' }));
-    playButton.on('pointerdown', () => {
+    startButton.on('pointerdown', () => {
         this.scene.start('GameScene');
     });
 };
@@ -77,8 +82,8 @@ let moveInterval = 150;
 let isGameOver = false;
 
 GameScene.prototype.preload = function() {
-    // Загружаем спрайт-лист из корня репозитория
-    this.load.spritesheet('snake_sprites', 'textures.png', { frameWidth: 20, frameHeight: 20 });
+    // Загружаем спрайт-лист. Размер клетки 64x64.
+    this.load.spritesheet('snake_sprites', 'textures.png', { frameWidth: 64, frameHeight: 64 });
 };
 
 GameScene.prototype.create = function() {
@@ -88,10 +93,14 @@ GameScene.prototype.create = function() {
     score = 0;
     moveTimer = 0;
 
-    // ВАЖНО: Мы используем 'snake_sprites' и номера (0, 1, 2).
-    // Если картинки не совпадают, поменяй эти цифры местами!
-    snake.push(this.add.image(400, 300, 'snake_sprites', 0)); // 0 - Голова
-    apple = this.add.image(100, 100, 'snake_sprites', 4);     // 4 - Яблоко
+    // Создаем голову змейки (картинка 0) и уменьшаем её
+    let startSprite = this.add.image(400, 300, 'snake_sprites', 0);
+    startSprite.setScale(0.3); 
+    snake.push(startSprite);
+
+    // Создаем яблоко (картинка 4) и уменьшаем его
+    apple = this.add.image(100, 100, 'snake_sprites', 4);
+    apple.setScale(0.3);
 
     scoreText = this.add.text(10, 10, 'Score: 0', { fontSize: '24px', fill: '#fff' });
 
@@ -116,11 +125,13 @@ GameScene.prototype.moveSnake = function() {
     let newX = head.x;
     let newY = head.y;
 
+    // Шаг движения 20 пикселей
     if (direction === 'UP') newY -= 20;
     if (direction === 'DOWN') newY += 20;
     if (direction === 'LEFT') newX -= 20;
     if (direction === 'RIGHT') newX += 20;
 
+    // Проверка стен
     if (newX < 0 || newX >= 800 || newY < 0 || newY >= 600) {
         this.gameOver();
         return;
@@ -130,9 +141,11 @@ GameScene.prototype.moveSnake = function() {
     tail.x = newX;
     tail.y = newY;
     
+    // Проверка съедания яблока
     if (tail.x === apple.x && tail.y === apple.y) {
-        // При росте добавляем сегмент. 1 - это номер картинки тела.
+        // Добавляем тело (картинка 1) и уменьшаем его
         let newSegment = this.add.image(head.x, head.y, 'snake_sprites', 1); 
+        newSegment.setScale(0.3); 
         snake.push(newSegment);
         snake.unshift(tail); 
 
