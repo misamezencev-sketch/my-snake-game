@@ -3,16 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <title>Космический выживший</title>
-    <!-- Подключаем пиксельный шрифт -->
+    
+    <!-- ПОДКЛЮЧАЕМ ПИКСЕЛЬНЫЙ ШРИФТ -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    
     <!-- Подключаем Phaser -->
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.min.js"></script>
     <!-- Подключаем VK Bridge -->
     <script src="vk-bridge.js"></script>
+    
+    <style>
+        /* Стили, чтобы игра была по центру и без отступов */
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #050510;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+    </style>
 </head>
-<body style="margin: 0; padding: 0; background-color: #050510; display: flex; justify-content: center; align-items: center; height: 100vh;">
+<body>
+    <!-- Контейнер, где будет рисоваться игра -->
     <div id="game"></div>
-    <!-- Подключаем наш код -->
+    
+    <!-- Подключаем наш код игры -->
     <script src="game.js"></script>
 </body>
 </html>
