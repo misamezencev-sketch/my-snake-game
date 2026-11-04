@@ -228,9 +228,17 @@ function spawnEnemy() {
     let rand = Math.random();
     if (rand > 0.7 && gameTime > 20000) { type = 'enemy_flyer'; speed = 150; hp = 1; }
     else if (rand > 0.4 && gameTime > 40000) { type = 'enemy_tank'; speed = 50; hp = 3; }
-    let cam = this.cameras.main;
-    let x = Phaser.Math.Between(cam.worldView.x - 100, cam.worldView.right + 100); let y = Phaser.Math.Between(cam.worldView.y - 100, cam.worldView.bottom + 100);
-    let e = enemies.create(x, y, type); e.speed = speed; e.hp = Math.floor(hp * enemyHpMultiplier);
+
+    // СПАВН ЗА ПРЕДЕЛАМИ ЭКРАНА (на расстоянии 600 пикселей от игрока по кругу)
+    let angle = Math.random() * Math.PI * 2;
+    let distance = 600; 
+    let x = player.x + Math.cos(angle) * distance;
+    let y = player.y + Math.sin(angle) * distance;
+
+    let e = enemies.create(x, y, type); 
+    e.speed = speed; 
+    e.hp = Math.floor(hp * enemyHpMultiplier);
+}
 }
 function spawnBoss(scene) {
     let cam = scene.cameras.main;
