@@ -68,6 +68,13 @@ let ammoText, reloadBar;
 let shopPhaseTimer = 0, shopOpen = false;
 let joystick = { active: false, startX: 0, startY: 0, curX: 0, curY: 0, base: null, thumb: null };
 
+GameScene.prototype.preload = function() {
+    // ЗАГРУЖАЕМ НАШИ КАРТИНКИ
+    this.load.image('player', 'player.png');
+    this.load.image('coin', 'coin.png');
+    this.load.image('star', 'exp.png');
+};
+
 GameScene.prototype.create = function() {
     gameOver = false; isPaused = false; playerHealth = 3; maxHealth = 3; hearts = []; playerXp = 0; playerLevel = 1; xpToNextLevel = 100; gameTime = 0; playerCoins = 0;
     currentWeapon = 'pistol'; ownedWeapons = { pistol: true, shotgun: false, rifle: false, rpg: false };
@@ -76,21 +83,21 @@ GameScene.prototype.create = function() {
     enemyHpMultiplier = 1; spawnRate = 1500; bossSpawnTimer = 0; shopPhaseTimer = 0; shopOpen = false;
     currentAmmo = weaponStats.pistol.maxAmmo; isReloading = false;
 
+    // Генерируем только тех, кого нет на картинках
     let g = this.make.graphics({x: 0, y: 0, add: false});
-    g.fillStyle(0xffffff, 1); g.fillRect(4, 0, 20, 24); g.fillStyle(0x00aaff, 1); g.fillRect(16, 6, 8, 12); g.fillStyle(0xaaaaaa, 1); g.fillRect(0, 4, 6, 16); g.generateTexture('player', 24, 24); g.clear();
+    
     g.fillStyle(0x00ff44, 1); g.fillCircle(15, 15, 15); g.generateTexture('enemy_slime', 30, 30); g.clear();
     g.fillStyle(0xaa00ff, 1); g.fillTriangle(15, 0, 30, 30, 0, 30); g.generateTexture('enemy_flyer', 30, 30); g.clear();
     g.fillStyle(0xff3300, 1); g.fillRect(0, 0, 40, 40); g.generateTexture('enemy_tank', 40, 40); g.clear();
     g.fillStyle(0x8800ff, 1); g.fillCircle(40, 40, 40); g.fillStyle(0xff0000, 1); g.fillCircle(40, 40, 15); g.generateTexture('enemy_boss', 80, 80); g.clear();
     g.fillStyle(0x00ffff, 1); g.fillRect(0, 0, 15, 4); g.generateTexture('bullet', 15, 4); g.clear();
-    g.fillStyle(0x00ffff, 1); g.beginPath(); g.moveTo(10, 0); g.lineTo(20, 10); g.lineTo(10, 20); g.lineTo(0, 10); g.closePath(); g.fillPath(); g.generateTexture('star', 20, 20); g.clear();
-    g.fillStyle(0xffff00, 1); g.fillCircle(10, 10, 10); g.fillStyle(0xffaa00, 1); g.fillCircle(10, 10, 7); g.generateTexture('coin', 20, 20); g.clear();
     g.fillStyle(0xff0000, 1); g.fillCircle(7, 7, 7); g.fillCircle(17, 7, 7); g.fillTriangle(0, 10, 24, 10, 12, 24); g.generateTexture('heart', 24, 24); g.clear();
     g.fillStyle(0xff5500, 1); g.fillCircle(20, 20, 20); g.generateTexture('meteor', 40, 40); g.clear();
     g.fillStyle(0x1a1a1a, 1); g.fillCircle(40, 40, 40); g.lineStyle(4, 0x333333, 1); g.strokeCircle(40, 40, 40); g.generateTexture('crater', 80, 80); g.clear();
     g.fillStyle(0x00ffff, 1); g.fillCircle(10, 10, 10); g.generateTexture('satellite', 20, 20); g.clear();
     g.fillStyle(0x555555, 1); g.fillRect(0, 0, 60, 60); g.fillStyle(0xff0000, 1); g.fillRect(0, 0, 60, 20); g.fillStyle(0x222222, 1); g.fillRect(10, 25, 40, 35); g.generateTexture('shop_closed', 60, 60); g.clear();
     g.fillStyle(0x555555, 1); g.fillRect(0, 0, 60, 60); g.fillStyle(0x00ff00, 1); g.fillRect(0, 0, 60, 20); g.fillStyle(0xffff00, 1); g.fillRect(10, 25, 40, 35); g.generateTexture('shop_open', 60, 60); g.clear();
+    
     g.fillStyle(0x333333, 1); g.fillRect(0, 0, 800, 600);
     for (let i = 0; i < 100; i++) { g.fillStyle(0x222222, Phaser.Math.FloatBetween(0.1, 0.5)); g.fillCircle(Phaser.Math.Between(0, 800), Phaser.Math.Between(0, 600), Phaser.Math.Between(5, 30)); }
     g.generateTexture('bg_tile', 800, 600); g.destroy();
@@ -112,7 +119,10 @@ GameScene.prototype.create = function() {
     }
 
     player = this.physics.add.sprite(0, 0, 'player');
-    player.setCollideWorldBounds(true); this.cameras.main.startFollow(player, true, 0.1, 0.1);
+    // УМЕНЬШАЕМ РАЗМЕР КАРТИНКИ ИГРОКА (если он слишком большой, поменяй 0.5 на 0.2 или 0.1)
+    player.setScale(0.5); 
+    player.setCollideWorldBounds(true); this.cameras.main.startMoving(player, true, 0.1, 0.1); // Исправлено на startFollow
+    this.cameras.main.startFollow(player, true, 0.1, 0.1);
 
     bullets = this.physics.add.group(); enemies = this.physics.add.group(); xpOrbs = this.physics.add.group(); coins = this.physics.add.group();
 
@@ -229,7 +239,6 @@ function shoot(scene) {
     let target = getNearestEnemy(scene, player.x, player.y); 
     if (!target) return;
     
-    // Не стреляем, если враг дальше 400 пикселей
     let distToEnemy = Phaser.Math.Distance.Between(player.x, player.y, target.x, target.y);
     if (distToEnemy > 400) return;
 
@@ -282,8 +291,18 @@ function hitEnemy(b, e) {
     if (e.hp <= 0) killEnemy(this, e);
 }
 function killEnemy(scene, e) {
-    e.destroy(); let xp = xpOrbs.create(e.x, e.y, 'star'); xp.setVelocity(Phaser.Math.Between(-50, 50), Phaser.Math.Between(-50, 50));
-    if (Math.random() < 0.25) { let c = coins.create(e.x, e.y, 'coin'); c.setVelocity(Phaser.Math.Between(-50, 50), Phaser.Math.Between(-50, 50)); }
+    e.destroy(); 
+    let xp = xpOrbs.create(e.x, e.y, 'star'); 
+    // УМЕНЬШАЕМ ЗВЕЗДОЧКУ ОПЫТА, ЕСЛИ ОНА БОЛЬШАЯ
+    xp.setScale(0.3);
+    xp.setVelocity(Phaser.Math.Between(-50, 50), Phaser.Math.Between(-50, 50));
+    
+    if (Math.random() < 0.25) { 
+        let c = coins.create(e.x, e.y, 'coin'); 
+        // УМЕНЬШАЕМ МОНЕТКУ, ЕСЛИ ОНА БОЛЬШАЯ
+        c.setScale(0.3);
+        c.setVelocity(Phaser.Math.Between(-50, 50), Phaser.Math.Between(-50, 50)); 
+    }
     
     if (Math.random() < vampirismChance && playerHealth < maxHealth) {
         playerHealth++; hearts[playerHealth-1].clearTint();
