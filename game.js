@@ -377,4 +377,103 @@ function damageEnemy(scene, e, damage) {
     if (e.hp <= 0) killEnemy(scene, e);
 }
 function killEnemy(scene, e) {
-    let emitter = scene.add.particles(e.x, e.y, 'particle_red', { speed: { min: 50, max: 200 }, scale: { start:
+    let emitter = scene.add.particles(e.x, e.y, 'particle_red', { speed: { min: 50, max: 200 }, scale: { start: 1, end: 0 }, lifespan: 300, quantity: 10 });
+    scene.time.delayedCall(300, () => emitter.destroy());
+    if (e.isBoss) { scene.cameras.main.shake(500, 0.02); currentBoss = null; }
+
+    e.destroy(); 
+    let xp = xpOrbs.create(e.x, e.y, 'xp_gem'); xp.setScale(0.5);
+    let c = coins.create(e.x, e.y, 'coin'); c.setScale(0.5);
+
+    if (e.isBoss) { 
+        for(let i=0; i<15; i++){ let x = xpOrbs.create(e.x, e.y, 'xp_gem'); if(i<5) coins.create(e.x, e.y, 'coin'); } 
+    }
+}
+function collectXp(p, x) { x.destroy(); playerXp += 5; xpBar.width = (playerXp / xpToNextLevel) * 800; if (playerXp >= xpToNextLevel) levelUp.call(this); }
+function collectCoin(p, c) { c.destroy(); playerCoins++; coinText.setText('🪙: ' + playerCoins); }
+function playerHit(p, e) {
+    if (gameOver || isInvulnerable) return;
+    playerHealth--; hearts[playerHealth].setTint(0x000000); isInvulnerable = true;
+    this.cameras.main.shake(200, 0.01);
+    let a = Phaser.Math.Angle.Between(e.x, e.y, p.x, p.y); p.setVelocity(Math.cos(a) * 400, Math.sin(a) * 400);
+    this.tweens.add({ targets: p, alpha: 0.2, duration: 100, yoyo: true, repeat: 5 });
+    if (playerHealth <= 0) { 
+        gameOver = true; this.physics.pause(); p.setTint(0xff0000); if (gameTime > bestTime) bestTime = gameTime; 
+        this.add.text(400, 250, 'ИГРА ОКОНЧЕНА', { ...pixelFont, fontSize: '30px', fill: '#ff0000' }).setOrigin(0.5).setScrollFactor(0).setDepth(200);
+        let restartBtn = this.add.text(400, 350, 'ЗАНОВО', { ...pixelFont, fontSize: '16px', backgroundColor: '#333', padding: { x: 20, y: 10 } }).setOrigin(0.5).setInteractive().setScrollFactor(0).setDepth(200);
+        restartBtn.on('pointerdown', () => this.scene.start('MenuScene')); 
+    } else { this.time.delayedCall(1500, () => { isInvulnerable = false; p.alpha = 1; }); }
+}
+function openShop(p, s) {
+    if (!s.getData('isOpen') || isPaused) return;
+    isPaused = true; this.physics.pause();
+    let overlay = this.add.rectangle(400, 300, 800, 600, 0x000000, 0.9).setScrollFactor(0).setDepth(200);
+    let title = this.add.text(400, 50, 'МАГАЗИН', { ...pixelFont, fontSize: '24px', fill: '#00ffff' }).setOrigin(0.5).setScrollFactor(0).setDepth(200);
+    let coinDisplay = this.add.text(400, 100, 'МОНЕТ: ' + playerCoins, { ...pixelFont, fill: '#ffff00' }).setOrigin(0.5).setScrollFactor(0).setDepth(200);
+    let elements = [overlay, title, coinDisplay];
+    let weapons = [
+        { id: 'pistol', name: 'ПИСТОЛЕТ', price: 0, desc: 'Урон 2' },
+        { id: 'shotgun', name: 'ДРОБОВИК', price: 25, desc: '4 пули' },
+        { id: 'rifle', name: 'АВТОМАТ', price: 50, desc: 'Скорострел' },
+        { id: 'rpg', name: 'РПГ', price: 100, desc: 'Взрыв' }
+    ];
+    weapons.forEach((w, i) => {
+        let y = 180 + i * 90;
+        let bg = this.add.rectangle(400, y, 600, 70, 0x113355).setStrokeStyle(2, 0x00ffff).setScrollFactor(0).setDepth(200);
+        let name = this.add.text(150, y, w.name, { ...pixelFont }).setOrigin(0, 0.5).setScrollFactor(0).setDepth(200);
+        let desc = this.add.text(150, y + 20, w.desc, { ...pixelFont, fontSize: '10px', fill: '#aaa' }).setOrigin(0, 0.5).setScrollFactor(0).setDepth(200);
+        let price = this.add.text(650, y, ownedWeapons[w.id] ? 'КУПЛЕНО' : ('🪙 ' + w.price), { ...pixelFont, fill: ownedWeapons[w.id] ? '#00ff00' : '#ffff00' }).setOrigin(1, 0.5).setScrollFactor(0).setDepth(200);
+        let zone = this.add.zone(400, y, 600, 70).setInteractive().setScrollFactor(0).setDepth(200);
+        zone.on('pointerdown', () => {
+            if (ownedWeapons[w.id]) { currentWeapon = w.id; currentAmmo = weaponStats[currentWeapon].maxAmmo; ammoText.setText('AMMO: ' + currentAmmo + '/' + weaponStats[currentWeapon].maxAmmo); elements.forEach(e=>e.destroy()); bg.destroy(); name.destroy(); desc.destroy(); price.destroy(); zone.destroy(); this.physics.resume(); isPaused = false; return; }
+            if (playerCoins >= w.price) {
+                playerCoins -= w.price; ownedWeapons[w.id] = true; currentWeapon = w.id;
+                currentAmmo = weaponStats[currentWeapon].maxAmmo; ammoText.setText('AMMO: ' + currentAmmo + '/' + weaponStats[currentWeapon].maxAmmo);
+                price.setText('КУПЛЕНО').setStyle({ fill: '#00ff00' }); coinDisplay.setText('МОНЕТ: ' + playerCoins);
+            }
+        });
+        elements.push(bg, name, desc, price, zone);
+    });
+    let closeBtn = this.add.text(400, 550, 'ЗАКРЫТЬ', { ...pixelFont, backgroundColor: '#333', padding: { x: 20, y: 10 } }).setOrigin(0.5).setInteractive().setScrollFactor(0).setDepth(200);
+    closeBtn.on('pointerdown', () => { elements.forEach(e => e.destroy()); closeBtn.destroy(); isPaused = false; this.physics.resume(); });
+    elements.push(closeBtn);
+}
+function levelUp() {
+    isPaused = true; this.physics.pause(); playerXp = 0; playerLevel++; xpToNextLevel += 20; xpBar.width = 0; levelText.setText('LVL: ' + playerLevel);
+    let overlay = this.add.rectangle(400, 300, 800, 600, 0x000000, 0.85).setScrollFactor(0).setDepth(200);
+    let title = this.add.text(400, 80, 'ВЫБЕРИ УЛУЧШЕНИЕ', { ...pixelFont, fontSize: '20px', fill: '#00ffff' }).setOrigin(0.5).setScrollFactor(0).setDepth(200);
+    
+    let pool = [
+        { title: 'УРОН', desc: '+1 к урону', color: 0x113355, action: () => bulletDamage += 1 },
+        { title: 'СКОРОСТЬ АТАКИ', desc: 'Быстрее стрельба', color: 0x113355, action: () => fireRate *= 0.85 },
+        { title: 'СКОРОСТЬ', desc: '+20 к скорости', color: 0x333333, action: () => moveSpeed += 20 },
+        { title: 'ЛЕЧЕНИЕ', desc: 'Восстановить 1 HP', color: 0x333333, action: () => { if (playerHealth < maxHealth) { playerHealth++; hearts[playerHealth-1].clearTint(); } } },
+        { title: 'ДОП. ПУЛЯ', desc: '+1 снаряд', color: 0x113355, action: () => bulletCount = Math.min(bulletCount + 1, 7) },
+        { title: 'МАКС. HP', desc: '+1 сердечко', color: 0x551155, action: () => { maxHealth++; playerHealth = maxHealth; let newHeart = this.add.image(30 + (maxHealth - 1) * 30, 60, 'heart').setScrollFactor(0).setDepth(100); hearts.push(newHeart); hearts.forEach(h => h.clearTint()); } },
+        { title: 'МЕТЕОРИТ', desc: 'Падает чаще', color: 0x551155, action: () => { hasMeteor = true; meteorFallSpeed = Math.max(1000, meteorFallSpeed - 500); } },
+        { title: 'ДРОН', desc: '+1 дрон', color: 0x551155, action: () => { if (drones.length < 4) { let d = this.add.circle(0, 0, 8, 0x00ffff).setDepth(5); d.lastFired = 0; drones.push(d); } } },
+        { title: 'СПУТНИК', desc: 'Вращается и бьет', color: 0x551155, action: () => { if (satellites.length < 3) { let s = this.add.image(player.x, player.y, 'satellite').setDepth(5); satellites.push(s); } } }
+    ];
+
+    Phaser.Utils.Array.Shuffle(pool); let choices = pool.slice(0, 3); let elements = [overlay, title];
+    choices.forEach((c, i) => {
+        let y = 200 + i * 130;
+        let bg = this.add.rectangle(400, y, 500, 100, c.color).setStrokeStyle(2, 0xffffff).setScrollFactor(0).setDepth(200);
+        let t1 = this.add.text(400, y - 20, c.title, { ...pixelFont }).setOrigin(0.5).setScrollFactor(0).setDepth(200);
+        let t2 = this.add.text(400, y + 20, c.desc, { ...pixelFont, fontSize: '10px', fill: '#aaa' }).setOrigin(0.5).setScrollFactor(0).setDepth(200);
+        let zone = this.add.zone(400, y, 500, 100).setInteractive().setScrollFactor(0).setDepth(200);
+        zone.on('pointerdown', () => { c.action.call(this); elements.forEach(e => e.destroy()); bg.destroy(); t1.destroy(); t2.destroy(); zone.destroy(); isPaused = false; this.physics.resume(); });
+        elements.push(bg, t1, t2, zone);
+    });
+}
+function castMeteor(scene) {
+    let targets = enemies.getChildren(); if (targets.length === 0) return;
+    Phaser.Utils.Array.Shuffle(targets).slice(0, 3).forEach(e => {
+        let m = scene.add.image(e.x, e.y - 300, 'particle_red').setScale(3);
+        scene.tweens.add({ targets: m, y: e.y, duration: 400, onComplete: () => {
+            m.destroy(); let exp = scene.add.circle(e.x, e.y, 60, 0xff5500, 0.8); scene.time.delayedCall(200, () => exp.destroy());
+            scene.cameras.main.shake(100, 0.005);
+            enemies.getChildren().forEach(en => { if (Phaser.Math.Distance.Between(e.x, e.y, en.x, en.y) < 60) { damageEnemy(scene, en, 3); } });
+        }});
+    });
+}
