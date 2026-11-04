@@ -1,178 +1,237 @@
-// 1. Инициализация VK Bridge
-if (typeof vkBridge !== 'undefined') {
-    vkBridge.send("VKWebAppInit", {})
-        .then(() => console.log("✅ VK Bridge готов!"))
-        .catch(err => console.error("❌ Ошибка VK Bridge:", err));
-}
-
-let highScore = 0;
-
+// 1. Настройка игры
 const config = {
     type: Phaser.AUTO,
     width: 800,
     height: 600,
     parent: 'game',
-    backgroundColor: '#2d2d2d',
-    scene: [MenuScene, GameScene]
+    backgroundColor: '#1a1a1a',
+    physics: {
+        default: 'arcade',
+        arcade: {
+            gravity: { y: 0 },
+            debug: false
+        }
+    },
+    scene: {
+        preload: preload,
+        create: create,
+        update: update
+    }
 };
 
 const game = new Phaser.Game(config);
 
-// ==========================================
-// СЦЕНА 1: ГЛАВНОЕ МЕНЮ
-// ==========================================
-function MenuScene() {
-    Phaser.Scene.call(this, { key: 'MenuScene' });
+// Глобальные переменные
+let player;
+let bullets;
+let enemies;
+let xpOrbs;
+let playerXp = 0;
+let playerLevel = 1;
+let xpToNextLevel = 100;
+let xpBar;
+let levelText;
+let lastFired = 0;
+let fireRate = 500; // Скорость стрельбы (мс)
+let gameOver = false;
+let isPaused = false;
+let cursors;
+let keys;
+
+function preload() {
+    // Здесь мы ничего не загружаем, всё рисуем кодом для теста
 }
-MenuScene.prototype = Object.create(Phaser.Scene.prototype);
-MenuScene.prototype.constructor = MenuScene;
 
-MenuScene.prototype.preload = function() {
-    // Убедись, что файл называется bg.png и лежит в корне репозитория
-    this.load.image('menu_bg', 'bg.png'); 
-};
+function create() {
+    gameOver = false;
+    isPaused = false;
 
-MenuScene.prototype.create = function() {
-    // Добавляем картинку меню
-    this.add.image(400, 300, 'menu_bg').setDisplaySize(800, 600);
+    // Создаем текстуры программно
+    let graphics = this.make.graphics({x: 0, y: 0, add: false});
     
-    // Оставляем надпись с рекордом (в левом верхнем углу)
-    this.add.text(20, 20, 'Рекорд: ' + highScore, { 
-        fontSize: '32px', fill: '#ffffff', stroke: '#000000', strokeThickness: 4
-    });
-
-    // --- НЕВИДИМАЯ КНОПКА ПОВЕРХ НАДПИСИ START ---
-    // Координаты (400, 520) и размер (200x80) подобраны под твою картинку.
-    // Если кнопка не нажимается, поменяй Y (сейчас 520) в большую или меньшую сторону.
-    let startButton = this.add.rectangle(400, 520, 200, 80, 0xffffff, 0); 
+    // Игрок (Синий квадрат)
+    graphics.fillStyle(0x00aaff, 1);
+    graphics.fillRect(0, 0, 30, 30);
+    graphics.generateTexture('player', 30, 30);
     
-    startButton.setInteractive();
-
-    startButton.on('pointerover', () => {
-        this.input.setDefaultCursor('pointer');
-        startButton.setFillStyle(0xffffff, 0.2); // Легкая подсветка при наведении
-    });
+    // Враг (Красный круг)
+    graphics.fillStyle(0xff0000, 1);
+    graphics.fillCircle(15, 15, 15);
+    graphics.generateTexture('enemy', 30, 30);
     
-    startButton.on('pointerout', () => {
-        this.input.setDefaultCursor('default');
-        startButton.setFillStyle(0xffffff, 0);
+    // Пуля (Желтый круг)
+    graphics.fillStyle(0xffff00, 1);
+    graphics.fillCircle(5, 5, 5);
+    graphics.generateTexture('bullet', 10, 10);
+    
+    // Опыт (Зеленый ромб)
+    graphics.fillStyle(0x00ff00, 1);
+    graphics.fillTriangle(10, 0, 20, 20, 0, 20);
+    graphics.generateTexture('xp', 20, 20);
+
+    // Создаем игрока
+    player = this.physics.add.sprite(400, 300, 'player');
+    player.setCollideWorldBounds(true);
+
+    // Группы объектов
+    bullets = this.physics.add.group();
+    enemies = this.physics.add.group();
+    xpOrbs = this.physics.add.group();
+
+    // Управление
+    cursors = this.input.keyboard.createCursorKeys();
+    keys = this.input.keyboard.addKeys('W,A,S,D');
+
+    // Интерфейс (Полоска опыта и уровень)
+    this.add.rectangle(400, 20, 800, 40, 0x000000).setOrigin(0.5);
+    xpBar = this.add.rectangle(0, 20, 0, 20, 0x00ff00).setOrigin(0, 0.5);
+    levelText = this.add.text(10, 10, 'УРОВЕНЬ: 1', { fontSize: '20px', fill: '#fff', fontFamily: 'Arial' });
+
+    // Таймеры
+    this.time.addEvent({
+        delay: 1000,
+        callback: spawnEnemy,
+        callbackScope: this,
+        loop: true
     });
 
-    startButton.on('pointerdown', () => {
-        this.scene.start('GameScene');
-    });
-};
-
-// ==========================================
-// СЦЕНА 2: ИГРА
-// ==========================================
-function GameScene() {
-    Phaser.Scene.call(this, { key: 'GameScene' });
+    // Проверка столкновений
+    this.physics.add.overlap(bullets, enemies, hitEnemy, null, this);
+    this.physics.add.overlap(player, enemies, playerHit, null, this);
+    this.physics.add.overlap(player, xpOrbs, collectXp, null, this);
 }
-GameScene.prototype = Object.create(Phaser.Scene.prototype);
-GameScene.prototype.constructor = GameScene;
 
-let snake;
-let direction;
-let apple;
-let score = 0;
-let scoreText;
-let moveTimer = 0;
-let moveInterval = 150; 
-let isGameOver = false;
+function update(time, delta) {
+    if (gameOver || isPaused) return;
 
-GameScene.prototype.preload = function() {
-    // Загружаем спрайт-лист. Размер клетки 64x64.
-    this.load.spritesheet('snake_sprites', 'textures.png', { frameWidth: 64, frameHeight: 64 });
-};
+    // Движение игрока
+    let speed = 200;
+    player.setVelocity(0);
+    if (cursors.left.isDown || keys.A.isDown) player.setVelocityX(-speed);
+    if (cursors.right.isDown || keys.D.isDown) player.setVelocityX(speed);
+    if (cursors.up.isDown || keys.W.isDown) player.setVelocityY(-speed);
+    if (cursors.down.isDown || keys.S.isDown) player.setVelocityY(speed);
 
-GameScene.prototype.create = function() {
-    snake = [];
-    direction = 'RIGHT';
-    isGameOver = false;
-    score = 0;
-    moveTimer = 0;
-
-    // Создаем голову змейки (картинка 0) и уменьшаем её
-    let startSprite = this.add.image(400, 300, 'snake_sprites', 0);
-    startSprite.setScale(0.3); 
-    snake.push(startSprite);
-
-    // Создаем яблоко (картинка 4) и уменьшаем его
-    apple = this.add.image(100, 100, 'snake_sprites', 4);
-    apple.setScale(0.3);
-
-    scoreText = this.add.text(10, 10, 'Score: 0', { fontSize: '24px', fill: '#fff' });
-
-    this.input.keyboard.on('keydown-UP', () => { if (direction !== 'DOWN') direction = 'UP'; });
-    this.input.keyboard.on('keydown-DOWN', () => { if (direction !== 'UP') direction = 'DOWN'; });
-    this.input.keyboard.on('keydown-LEFT', () => { if (direction !== 'RIGHT') direction = 'LEFT'; });
-    this.input.keyboard.on('keydown-RIGHT', () => { if (direction !== 'LEFT') direction = 'RIGHT'; });
-};
-
-GameScene.prototype.update = function(time, delta) {
-    if (isGameOver) return; 
-
-    moveTimer += delta;
-    if (moveTimer > moveInterval) {
-        moveTimer = 0;
-        this.moveSnake();
-    }
-};
-
-GameScene.prototype.moveSnake = function() {
-    let head = snake[0];
-    let newX = head.x;
-    let newY = head.y;
-
-    // Шаг движения 20 пикселей
-    if (direction === 'UP') newY -= 20;
-    if (direction === 'DOWN') newY += 20;
-    if (direction === 'LEFT') newX -= 20;
-    if (direction === 'RIGHT') newX += 20;
-
-    // Проверка стен
-    if (newX < 0 || newX >= 800 || newY < 0 || newY >= 600) {
-        this.gameOver();
-        return;
+    // Автоматическая стрельба
+    if (time > lastFired) {
+        shootAtNearestEnemy(this);
+        lastFired = time + fireRate;
     }
 
-    let tail = snake.pop();
-    tail.x = newX;
-    tail.y = newY;
-    
-    // Проверка съедания яблока
-    if (tail.x === apple.x && tail.y === apple.y) {
-        // Добавляем тело (картинка 1) и уменьшаем его
-        let newSegment = this.add.image(head.x, head.y, 'snake_sprites', 1); 
-        newSegment.setScale(0.3); 
-        snake.push(newSegment);
-        snake.unshift(tail); 
+    // Враги двигаются к игроку (логика внутри функции создания врага)
+}
 
-        score += 10;
-        scoreText.setText('Score: ' + score);
-        if (score > highScore) highScore = score;
+// Функция стрельбы
+function shootAtNearestEnemy(scene) {
+    if (enemies.getChildren().length === 0) return;
 
-        let gridX = Phaser.Math.Between(0, 39) * 20;
-        let gridY = Phaser.Math.Between(0, 29) * 20;
-        apple.setPosition(gridX, gridY);
-    } else {
-        snake.unshift(tail);
-    }
-};
+    let nearestEnemy = null;
+    let minDistance = Infinity;
 
-GameScene.prototype.gameOver = function() {
-    isGameOver = true;
-    this.add.rectangle(400, 300, 800, 600, 0x000000, 0.7);
-    this.add.text(400, 200, 'GAME OVER', { fontSize: '60px', fill: '#ff0000' }).setOrigin(0.5);
-    
-    let restartButton = this.add.text(400, 400, 'ИГРАТЬ СНОВА', { 
-        fontSize: '40px', fill: '#ffffff', backgroundColor: '#000000', padding: { x: 30, y: 15 }
-    }).setOrigin(0.5).setInteractive();
-
-    restartButton.on('pointerover', () => restartButton.setStyle({ fill: '#00ff00' }));
-    restartButton.on('pointerout', () => restartButton.setStyle({ fill: '#ffffff' }));
-    restartButton.on('pointerdown', () => {
-        this.scene.start('MenuScene');
+    enemies.getChildren().forEach(enemy => {
+        let distance = Phaser.Math.Distance.Between(player.x, player.y, enemy.x, enemy.y);
+        if (distance < minDistance) {
+            minDistance = distance;
+            nearestEnemy = enemy;
+        }
     });
-};
+
+    if (nearestEnemy) {
+        let bullet = bullets.create(player.x, player.y, 'bullet');
+        scene.physics.moveToObject(bullet, nearestEnemy, 400); // Скорость пули
+    }
+}
+
+// Создание врага
+function spawnEnemy() {
+    if (gameOver || isPaused) return;
+
+    // Спавн по краям экрана
+    let x = Phaser.Math.Between(0, 1) ? Phaser.Math.Between(0, 800) : (Phaser.Math.Between(0, 1) ? 0 : 800);
+    let y = x === 0 || x === 800 ? Phaser.Math.Between(0, 600) : (Phaser.Math.Between(0, 1) ? 0 : 600);
+    
+    let enemy = enemies.create(x, y, 'enemy');
+    
+    // Логика преследования игрока (обновляется в update)
+    enemy.update = function() {
+        if (gameOver || isPaused) return;
+        this.physics.moveToObject(this, player, 80); // Скорость врага
+    };
+}
+
+// Столкновение пули и врага
+function hitEnemy(bullet, enemy) {
+    bullet.destroy();
+    enemy.destroy();
+    
+    // Спавн опыта
+    let xp = xpOrbs.create(enemy.x, enemy.y, 'xp');
+    xp.setVelocity(Phaser.Math.Between(-50, 50), Phaser.Math.Between(-50, 50));
+}
+
+// Сбор опыта
+function collectXp(player, xp) {
+    xp.destroy();
+    playerXp += 20;
+    
+    // Обновляем полоску
+    let barWidth = (playerXp / xpToNextLevel) * 800;
+    xpBar.width = barWidth;
+
+    // Проверка уровня
+    if (playerXp >= xpToNextLevel) {
+        levelUp();
+    }
+}
+
+// Столкновение игрока и врага
+function playerHit(player, enemy) {
+    if (gameOver) return;
+    gameOver = true;
+    this.physics.pause();
+    player.setTint(0xff0000);
+    this.add.text(400, 300, 'ИГРА ОКОНЧЕНА', { fontSize: '60px', fill: '#ff0000' }).setOrigin(0.5);
+}
+
+// Повышение уровня
+function levelUp() {
+    isPaused = true;
+    this.physics.pause();
+    playerXp = 0;
+    playerLevel++;
+    xpToNextLevel += 50;
+    xpBar.width = 0;
+    levelText.setText('УРОВЕНЬ: ' + playerLevel);
+
+    // Окно выбора
+    let overlay = this.add.rectangle(400, 300, 800, 600, 0x000000, 0.8);
+    
+    this.add.text(400, 100, 'ВЫБЕРИТЕ УЛУЧШЕНИЕ', { fontSize: '40px', fill: '#fff' }).setOrigin(0.5);
+
+    // Кнопка 1: Урон
+    let btn1 = this.add.text(400, 250, 'БОЛЬШЕ УРОНА', { fontSize: '30px', fill: '#fff', backgroundColor: '#333', padding: { x: 20, y: 10 } }).setOrigin(0.5).setInteractive();
+    btn1.on('pointerdown', () => {
+        fireRate -= 100; // Ускоряем стрельбу
+        closeLevelUp(this, [overlay, btn1, btn2, btn3, title]);
+    });
+
+    // Кнопка 2: Скорость
+    let btn2 = this.add.text(400, 350, 'СКОРОСТЬ ПЕРЕДВИЖЕНИЯ', { fontSize: '30px', fill: '#fff', backgroundColor: '#333', padding: { x: 20, y: 10 } }).setOrigin(0.5).setInteractive();
+    btn2.on('pointerdown', () => {
+        // Увеличиваем скорость игрока (глобальная переменная speed в update)
+        closeLevelUp(this, [overlay, btn1, btn2, btn3, title]);
+    });
+
+    // Кнопка 3: Лечение
+    let btn3 = this.add.text(400, 450, 'ВОССТАНОВИТЬ ЗДОРОВЬЕ', { fontSize: '30px', fill: '#fff', backgroundColor: '#333', padding: { x: 20, y: 10 } }).setOrigin(0.5).setInteractive();
+    btn3.on('pointerdown', () => {
+        closeLevelUp(this, [overlay, btn1, btn2, btn3, title]);
+    });
+}
+
+// Закрытие меню улучшений
+function closeLevelUp(scene, elements) {
+    elements.forEach(el => el.destroy());
+    isPaused = false;
+    scene.physics.resume();
+}
