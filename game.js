@@ -28,9 +28,10 @@ let apple;
 let score = 0;
 let scoreText;
 let moveTimer = 0;
-let moveInterval = 150; // Скорость змейки
+let moveInterval = 150; 
+let isGameOver = false; // Флаг для окончания игры
 
-// 3. Генерация текстур (квадратики)
+// 3. Генерация текстур
 function preload() {
     let graphics = this.make.graphics({x: 0, y: 0, add: false});
     graphics.fillStyle(0x00ff00, 1); // Зелёный
@@ -48,6 +49,8 @@ function create() {
     snake = [];
     snake.push(this.add.image(400, 300, 'head'));
     direction = 'RIGHT';
+    isGameOver = false;
+    score = 0;
 
     apple = this.add.image(100, 100, 'apple');
     scoreText = this.add.text(10, 10, 'Score: 0', { fontSize: '24px', fill: '#fff' });
@@ -61,6 +64,8 @@ function create() {
 
 // 5. Игровой цикл
 function update(time, delta) {
+    if (isGameOver) return; // Если игра окончена, ничего не двигаем
+
     moveTimer += delta;
     if (moveTimer > moveInterval) {
         moveTimer = 0;
@@ -79,21 +84,43 @@ function moveSnake() {
     if (direction === 'LEFT') newX -= 20;
     if (direction === 'RIGHT') newX += 20;
 
-    head.x = newX;
-    head.y = newY;
+    // --- ПРОВЕРКА СТЕН ---
+    if (newX < 0 || newX >= 800 || newY < 0 || newY >= 600) {
+        gameOver.call(this);
+        return;
+    }
 
-    // Поедание яблока
-    if (head.x === apple.x && head.y === apple.y) {
+    // --- ДВИЖЕНИЕ ТЕЛА ---
+    // Перемещаем хвост в начало (это создает эффект ползущей змеи)
+    let tail = snake.pop();
+    tail.x = newX;
+    tail.y = newY;
+    
+    // Проверяем, съела ли змея яблоко
+    if (tail.x === apple.x && tail.y === apple.y) {
+        // Съели яблоко: возвращаем хвост на место (змейка растет) и добавляем его обратно в конец
+        let newSegment = this.add.image(head.x, head.y, 'body');
+        snake.push(newSegment);
+        
+        // Хвост (который мы только что двигали) встает на место головы
+        snake.unshift(tail); 
+
         score += 10;
         scoreText.setText('Score: ' + score);
-        
+
         // Новое положение яблока
         let gridX = Phaser.Math.Between(0, 39) * 20;
         let gridY = Phaser.Math.Between(0, 29) * 20;
         apple.setPosition(gridX, gridY);
-
-        // Добавление сегмента
-        let newSegment = this.add.image(head.x, head.y, 'body');
-        snake.push(newSegment);
+    } else {
+        // Не съели: просто ставим хвост на место головы
+        snake.unshift(tail);
     }
+}
+
+// 7. Функция окончания игры
+function gameOver() {
+    isGameOver = true;
+    this.add.text(250, 250, 'GAME OVER', { fontSize: '48px', fill: '#ff0000' });
+    this.add.text(280, 320, 'Нажмите F5, чтобы начать заново', { fontSize: '20px', fill: '#fff' });
 }
