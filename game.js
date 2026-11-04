@@ -5,16 +5,16 @@ const config = {
     parent: 'game',
     backgroundColor: '#050510',
     scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
-    physics: { default: 'arcade', arcade: { gravity: { y: 0 }, debug: false } },
+    physics: { default: 'arcade', arcade: { gravity: { y: 0 }, debug: false } }, // debug выключен!
     scene: [BootScene, MenuScene, WardrobeScene, GameScene]
 };
 
 const game = new Phaser.Game(config);
-const pixelFont = { fontFamily: '"Press Start 2P"', fontSize: '14px', fill: '#ffffff' };
+const pixelFont = { fontFamily: '"Press Start 2P"', fontSize: '16px', fill: '#ffffff' };
 let bestTime = 0;
-let selectedSkin = 'player_classic'; // Текущий скин
+let selectedSkin = 'player_classic';
 
-// --- СЦЕНА ЗАГРУЗКИ (Рисуем пиксельные спрайты и модели) ---
+// --- СЦЕНА ЗАГРУЗКИ ---
 function BootScene() { Phaser.Scene.call(this, { key: 'BootScene' }); }
 BootScene.prototype = Object.create(Phaser.Scene.prototype);
 BootScene.prototype.constructor = BootScene;
@@ -22,8 +22,8 @@ BootScene.prototype.create = function() {
     let g = this.make.graphics({x: 0, y: 0, add: false});
     let p = 4;
 
-    // === 1. КОСМОНАВТЫ (3 модели) ===
-    // Модель 1: Классический (Белый)
+    // --- 1. КОСМОНАВТЫ ---
+    // Классический
     g.clear();
     g.fillStyle(0xffffff, 1);
     g.fillRect(2*p, 2*p, 4*p, 2*p); g.fillRect(1*p, 4*p, 6*p, 4*p); g.fillRect(2*p, 8*p, 4*p, 4*p);
@@ -33,51 +33,47 @@ BootScene.prototype.create = function() {
     g.fillStyle(0x555555, 1); g.fillRect(7*p, 6*p, 2*p, 6*p); g.fillStyle(0x333333, 1); g.fillRect(8*p, 12*p, 1*p, 2*p); 
     g.generateTexture('player_classic', 10*p, 16*p);
 
-    // Модель 2: Тяжелый скафандр (Оранжевый/Красный)
+    // Тяжелый
     g.clear();
     g.fillStyle(0xff5500, 1);
     g.fillRect(1*p, 1*p, 6*p, 2*p); g.fillRect(0*p, 3*p, 8*p, 5*p); g.fillRect(1*p, 8*p, 6*p, 4*p);
     g.fillRect(0*p, 8*p, 1*p, 4*p); g.fillRect(7*p, 8*p, 1*p, 4*p); g.fillRect(1*p, 12*p, 2*p, 3*p); g.fillRect(5*p, 12*p, 2*p, 3*p);
-    g.fillStyle(0x222222, 1); g.fillRect(2*p, 3*p, 4*p, 3*p); // Визор
-    g.fillStyle(0xffff00, 1); g.fillRect(2*p, 9*p, 1*p, 1*p); g.fillRect(4*p, 9*p, 1*p, 1*p); // Лампы
-    g.fillStyle(0x333333, 1); g.fillRect(8*p, 5*p, 2*p, 8*p); // Рюкзак
+    g.fillStyle(0x222222, 1); g.fillRect(2*p, 3*p, 4*p, 3*p);
+    g.fillStyle(0xffff00, 1); g.fillRect(2*p, 9*p, 1*p, 1*p); g.fillRect(4*p, 9*p, 1*p, 1*p);
+    g.fillStyle(0x333333, 1); g.fillRect(8*p, 5*p, 2*p, 8*p);
     g.generateTexture('player_heavy', 10*p, 16*p);
 
-    // Модель 3: Разведчик (Темный/Зеленый)
+    // Разведчик
     g.clear();
     g.fillStyle(0x333333, 1);
     g.fillRect(3*p, 2*p, 3*p, 2*p); g.fillRect(2*p, 4*p, 5*p, 5*p); g.fillRect(3*p, 9*p, 3*p, 3*p);
     g.fillRect(1*p, 9*p, 1*p, 3*p); g.fillRect(6*p, 9*p, 1*p, 3*p); g.fillRect(3*p, 12*p, 1*p, 2*p); g.fillRect(5*p, 12*p, 1*p, 2*p);
-    g.fillStyle(0x00ff00, 1); g.fillRect(3*p, 5*p, 3*p, 2*p); // Визор
-    g.fillStyle(0x555555, 1); g.fillRect(7*p, 7*p, 2*p, 5*p); // Рюкзак
+    g.fillStyle(0x00ff00, 1); g.fillRect(3*p, 5*p, 3*p, 2*p);
+    g.fillStyle(0x555555, 1); g.fillRect(7*p, 7*p, 2*p, 5*p);
     g.generateTexture('player_scout', 10*p, 16*p);
 
     // Частица огня
     g.clear(); g.fillStyle(0xff8800, 1); g.fillCircle(3, 3, 3); g.generateTexture('flame', 6, 6);
 
-    // === 2. ПРИШЕЛЬЦЫ ===
-    // Зеленый жук
+    // --- 2. ПРИШЕЛЬЦЫ ---
     g.clear(); g.fillStyle(0x00ff00, 1); g.fillRect(2*p, 1*p, 4*p, 2*p); g.fillRect(1*p, 3*p, 6*p, 3*p); g.fillRect(0*p, 4*p, 1*p, 1*p); g.fillRect(7*p, 4*p, 1*p, 1*p); g.fillStyle(0x000000, 1); g.fillRect(3*p, 2*p, 1*p, 1*p); g.fillRect(5*p, 2*p, 1*p, 1*p); g.generateTexture('enemy_small', 8*p, 6*p);
-    // Фиолетовый
     g.clear(); g.fillStyle(0xaa00ff, 1); g.fillRect(1*p, 0*p, 6*p, 2*p); g.fillRect(2*p, 2*p, 4*p, 4*p); g.fillRect(1*p, 3*p, 1*p, 3*p); g.fillRect(6*p, 3*p, 1*p, 3*p); g.fillStyle(0xffffff, 1); g.fillRect(3*p, 2*p, 1*p, 1*p); g.fillRect(5*p, 2*p, 1*p, 1*p); g.generateTexture('enemy_medium', 8*p, 6*p);
-    // Красный танк
     g.clear(); g.fillStyle(0xff0044, 1); g.fillRect(1*p, 1*p, 6*p, 5*p); g.fillRect(0*p, 2*p, 1*p, 3*p); g.fillRect(7*p, 2*p, 1*p, 3*p); g.fillStyle(0x000000, 1); g.fillRect(2*p, 2*p, 4*p, 2*p); g.generateTexture('enemy_tank', 8*p, 7*p);
-    // Голубой дрон
     g.clear(); g.fillStyle(0x00ffff, 1); g.fillRect(3*p, 0*p, 2*p, 2*p); g.fillRect(1*p, 2*p, 6*p, 2*p); g.fillRect(0*p, 3*p, 1*p, 1*p); g.fillRect(7*p, 3*p, 1*p, 1*p); g.fillStyle(0x000000, 1); g.fillRect(3*p, 1*p, 1*p, 1*p); g.generateTexture('enemy_flyer', 8*p, 4*p);
 
     // Босс
     g.clear(); g.fillStyle(0x8800ff, 1); g.fillCircle(64, 64, 60); g.fillStyle(0xff0000, 1); g.fillCircle(40, 40, 15); g.fillCircle(88, 40, 15); g.fillCircle(64, 80, 20); g.generateTexture('enemy_boss', 128, 128);
 
-    // === 3. МАГАЗИН-РАКЕТА ===
+    // --- 3. МАГАЗИН-РАКЕТА ---
     g.clear(); g.fillStyle(0xeeeeee, 1); g.fillRect(10, 20, 44, 40); g.fillStyle(0xdddddd, 1); g.fillTriangle(10, 20, 32, 0, 54, 20); g.fillStyle(0xff0000, 1); g.fillTriangle(10, 60, 10, 40, 0, 60); g.fillTriangle(54, 60, 54, 40, 64, 60); g.fillStyle(0x333333, 1); g.fillRect(24, 40, 16, 20); g.fillStyle(0xff0000, 1); g.fillRect(14, 24, 36, 10); g.generateTexture('shop_closed', 64, 64);
     g.clear(); g.fillStyle(0xeeeeee, 1); g.fillRect(10, 20, 44, 40); g.fillStyle(0xdddddd, 1); g.fillTriangle(10, 20, 32, 0, 54, 20); g.fillStyle(0xff0000, 1); g.fillTriangle(10, 60, 10, 40, 0, 60); g.fillTriangle(54, 60, 54, 40, 64, 60); g.fillStyle(0x333333, 1); g.fillRect(24, 40, 16, 20); g.fillStyle(0x00ff00, 1); g.fillRect(14, 24, 36, 10); g.generateTexture('shop_open', 64, 64);
 
-    // === 4. ПРЕПЯТСТВИЯ ===
+    // --- 4. ОКРУЖЕНИЕ ---
     g.clear(); g.fillStyle(0x333333, 1); g.fillCircle(24, 24, 22); g.fillStyle(0x222222, 1); g.fillCircle(15, 15, 6); g.fillCircle(30, 25, 8); g.generateTexture('obstacle_rock', 48, 48);
     g.clear(); g.fillStyle(0x666666, 1); g.fillRect(10, 10, 30, 30); g.fillStyle(0x999999, 1); g.fillRect(15, 15, 5, 20); g.fillStyle(0xff0000, 1); g.fillRect(25, 25, 10, 10); g.generateTexture('obstacle_debris', 50, 50);
     g.clear(); g.fillStyle(0x000000, 1); g.fillCircle(30, 30, 28); g.lineStyle(4, 0x8800ff, 0.8); g.strokeCircle(30, 30, 28); g.generateTexture('obstacle_blackhole', 60, 60);
 
-    // === 5. ОСТАЛЬНОЕ ===
+    // --- 5. ОСТАЛЬНОЕ ---
     g.clear(); g.fillStyle(0x00ffff, 1); g.fillRect(0, 0, 12, 4); g.generateTexture('bullet_pistol', 12, 4);
     g.clear(); g.fillStyle(0xffaa00, 1); g.fillRect(0, 0, 8, 4); g.generateTexture('bullet_shotgun', 8, 4);
     g.clear(); g.fillStyle(0xff00ff, 1); g.fillRect(0, 0, 18, 3); g.generateTexture('bullet_rifle', 18, 3);
@@ -89,47 +85,44 @@ BootScene.prototype.create = function() {
     g.clear(); g.fillStyle(0xffffff, 1); g.fillCircle(3, 3, 3); g.generateTexture('particle_white', 6, 6);
     g.clear(); g.fillStyle(0xff0000, 1); g.fillCircle(3, 3, 3); g.generateTexture('particle_red', 6, 6);
     
-    // Фон для меню (Космос с туманностью)
-    g.clear(); g.fillStyle(0x050510, 1); g.fillRect(0, 0, 800, 600);
-    for(let i=0; i<200; i++) { g.fillStyle(0xffffff, Phaser.Math.FloatBetween(0.1, 0.8)); g.fillCircle(Phaser.Math.Between(0, 800), Phaser.Math.Between(0, 600), Phaser.Math.Between(1, 2)); }
-    for(let i=0; i<5; i++) { g.fillStyle(0x330066, 0.2); g.fillCircle(Phaser.Math.Between(0, 800), Phaser.Math.Between(0, 600), Phaser.Math.Between(100, 200)); } // Туманности
-    g.generateTexture('menu_bg', 800, 600); g.destroy();
+    // КРАСИВЫЙ ФОН МЕНЮ
+    g.clear(); 
+    g.fillStyle(0x050510, 1); g.fillRect(0, 0, 800, 600);
+    for(let i=0; i<300; i++) { g.fillStyle(0xffffff, Phaser.Math.FloatBetween(0.1, 0.9)); g.fillCircle(Phaser.Math.Between(0, 800), Phaser.Math.Between(0, 600), Phaser.Math.Between(1, 3)); }
+    for(let i=0; i<5; i++) { g.fillStyle(0x330066, 0.3); g.fillCircle(Phaser.Math.Between(0, 800), Phaser.Math.Between(0, 600), Phaser.Math.Between(100, 200)); }
+    g.generateTexture('menu_bg', 800, 600);
+
+    // ФОН ДЛЯ ИГРЫ (Просто темный космос со звездами)
+    g.clear();
+    g.fillStyle(0x050510, 1); g.fillRect(0, 0, 800, 600);
+    for(let i=0; i<150; i++) { g.fillStyle(0xffffff, Phaser.Math.FloatBetween(0.1, 0.6)); g.fillCircle(Phaser.Math.Between(0, 800), Phaser.Math.Between(0, 600), Phaser.Math.Between(1, 2)); }
+    g.generateTexture('bg_tile', 800, 600); 
+    g.destroy();
 
     this.scene.start('MenuScene');
 };
 
-// --- ГЛАВНОЕ МЕНЮ ---
+// --- МЕНЮ ---
 function MenuScene() { Phaser.Scene.call(this, { key: 'MenuScene' }); }
 MenuScene.prototype = Object.create(Phaser.Scene.prototype);
 MenuScene.prototype.constructor = MenuScene;
 MenuScene.prototype.create = function() {
-    // Красивый фон
-    let bg = this.add.image(400, 300, 'menu_bg');
+    this.add.image(400, 300, 'menu_bg');
     
-    // Анимация мерцания звезд (просто для атмосферы)
-    this.tweens.add({ targets: bg, alpha: 0.8, duration: 2000, yoyo: true, repeat: -1 });
-
-    // Заголовок
     this.add.text(400, 100, 'КОСМИЧЕСКИЙ ВЫЖИВШИЙ', { ...pixelFont, fontSize: '32px', fill: '#00ffff', stroke: '#000', strokeThickness: 8 }).setOrigin(0.5);
     this.add.text(400, 180, 'РЕКОРД: ' + Math.floor(bestTime / 1000) + ' СЕК', { ...pixelFont, fontSize: '18px', fill: '#ffff00' }).setOrigin(0.5);
 
-    // Кнопка Играть
     let playBtn = this.add.rectangle(400, 350, 300, 60, 0x113355).setStrokeStyle(3, 0x00ffff).setInteractive();
     this.add.text(400, 350, 'ИГРАТЬ', { ...pixelFont, fontSize: '24px' }).setOrigin(0.5);
     playBtn.on('pointerover', () => playBtn.setFillStyle(0x225588));
     playBtn.on('pointerout', () => playBtn.setFillStyle(0x113355));
     playBtn.on('pointerdown', () => this.scene.start('GameScene'));
 
-    // Кнопка Гардероб
     let wardrobeBtn = this.add.rectangle(400, 440, 300, 60, 0x331155).setStrokeStyle(3, 0xaa00ff).setInteractive();
     this.add.text(400, 440, 'ГАРДЕРОБ', { ...pixelFont, fontSize: '20px' }).setOrigin(0.5);
     wardrobeBtn.on('pointerover', () => wardrobeBtn.setFillStyle(0x552288));
     wardrobeBtn.on('pointerout', () => wardrobeBtn.setFillStyle(0x331155));
     wardrobeBtn.on('pointerdown', () => this.scene.start('WardrobeScene'));
-
-    // Текущий выбранный скин (отображается в углу)
-    let currentSkinSprite = this.add.sprite(700, 500, selectedSkin).setScale(3);
-    this.add.text(700, 550, 'ВЫБРАН', { ...pixelFont, fontSize: '10px', fill: '#00ff00' }).setOrigin(0.5);
 };
 
 // --- ГАРДЕРОБ ---
@@ -141,34 +134,24 @@ WardrobeScene.prototype.create = function() {
     this.add.text(400, 80, 'ГАРДЕРОБ', { ...pixelFont, fontSize: '32px', fill: '#aa00ff' }).setOrigin(0.5);
 
     let skins = [
-        { id: 'player_classic', name: 'КЛАССИЧЕСКИЙ', desc: 'Стандартный скафандр' },
-        { id: 'player_heavy', name: 'ТЯЖЕЛЫЙ', desc: 'Усиленная броня' },
-        { id: 'player_scout', name: 'РАЗВЕДЧИК', desc: 'Легкий и быстрый' }
+        { id: 'player_classic', name: 'КЛАССИКА' },
+        { id: 'player_heavy', name: 'ТЯЖЕЛЫЙ' },
+        { id: 'player_scout', name: 'РАЗВЕДЧИК' }
     ];
 
     skins.forEach((skin, index) => {
         let x = 200 + index * 200;
         let y = 300;
         
-        // Рамка выбора
         let frame = this.add.rectangle(x, y, 150, 200, 0x000000).setStrokeStyle(3, skin.id === selectedSkin ? 0x00ff00 : 0x333333).setInteractive();
-        
-        // Спрайт скина
-        let sprite = this.add.sprite(x, y - 30, skin.id).setScale(3);
-        
-        // Название
+        this.add.sprite(x, y - 30, skin.id).setScale(3);
         this.add.text(x, y + 60, skin.name, { ...pixelFont, fontSize: '10px', fill: '#fff' }).setOrigin(0.5);
         
-        // Наведение
         frame.on('pointerover', () => frame.setFillStyle(0x222222));
         frame.on('pointerout', () => frame.setFillStyle(0x000000));
-        frame.on('pointerdown', () => {
-            selectedSkin = skin.id; // Меняем скин
-            this.scene.restart(); // Перезапускаем сцену, чтобы обновить зеленую рамку
-        });
+        frame.on('pointerdown', () => { selectedSkin = skin.id; this.scene.restart(); });
     });
 
-    // Кнопка Назад
     let backBtn = this.add.rectangle(400, 520, 200, 50, 0x550000).setStrokeStyle(2, 0xff0000).setInteractive();
     this.add.text(400, 520, 'НАЗАД', { ...pixelFont, fontSize: '16px' }).setOrigin(0.5);
     backBtn.on('pointerdown', () => this.scene.start('MenuScene'));
@@ -254,22 +237,31 @@ GameScene.prototype.create = function() {
 
     bullets = this.physics.add.group(); enemies = this.physics.add.group(); xpOrbs = this.physics.add.group(); coins = this.physics.add.group();
 
-    // ИНТЕРФЕЙС (Увеличенный и по углам)
+    // === ИНТЕРФЕЙС (Крупный и по углам) ===
     let ui = this.add.container(0, 0).setScrollFactor(0).setDepth(100);
+    
+    // Полоска опыта (сверху)
     ui.add(this.add.rectangle(400, 20, 800, 40, 0x000000).setOrigin(0.5).setAlpha(0.8));
     xpBar = this.add.rectangle(0, 20, 0, 20, 0x00ffff).setOrigin(0, 0.5);
-    levelText = this.add.text(20, 10, 'LVL: 1', { ...pixelFont, fontSize: '20px', fill: '#00ffff' });
-    timeText = this.add.text(400, 10, '00:00', { ...pixelFont, fontSize: '20px', fill: '#ffffff' }).setOrigin(0.5, 0);
-    coinText = this.add.text(780, 10, '🪙: 0', { ...pixelFont, fontSize: '20px', fill: '#ffff00' }).setOrigin(1, 0);
+    
+    // Уровень (слева)
+    levelText = this.add.text(30, 50, 'LVL: 1', { ...pixelFont, fontSize: '24px', fill: '#00ffff' });
+    // Таймер (по центру)
+    timeText = this.add.text(400, 10, '00:00', { ...pixelFont, fontSize: '24px', fill: '#ffffff' }).setOrigin(0.5, 0);
+    // Монеты (справа)
+    coinText = this.add.text(780, 50, '🪙: 0', { ...pixelFont, fontSize: '24px', fill: '#ffff00' }).setOrigin(1, 0);
+    
     ui.add([xpBar, levelText, timeText, coinText]);
 
-    ammoText = this.add.text(20, 80, 'AMMO: 12/12', { ...pixelFont, fontSize: '16px', fill: '#fff' }).setScrollFactor(0).setDepth(100);
-    reloadBar = this.add.rectangle(20, 110, 0, 6, 0xff0000).setOrigin(0, 0.5).setScrollFactor(0).setDepth(100);
+    // Патроны (слева под уровнем)
+    ammoText = this.add.text(30, 110, 'AMMO: 12/12', { ...pixelFont, fontSize: '18px', fill: '#fff' }).setScrollFactor(0).setDepth(100);
+    reloadBar = this.add.rectangle(30, 140, 0, 8, 0xff0000).setOrigin(0, 0.5).setScrollFactor(0).setDepth(100);
 
     bossHpBar = this.add.rectangle(400, 80, 0, 15, 0xff0000).setScrollFactor(0).setDepth(100).setVisible(false);
 
+    // Сердечки
     for (let i = 0; i < maxHealth; i++) {
-        hearts.push(this.add.image(30 + i * 40, 140, 'heart').setScale(1.5).setScrollFactor(0).setDepth(100));
+        hearts.push(this.add.image(50 + i * 40, 180, 'heart').setScale(1.5).setScrollFactor(0).setDepth(100));
     }
 
     cursors = this.input.keyboard.createCursorKeys(); keys = this.input.keyboard.addKeys('W,A,S,D');
