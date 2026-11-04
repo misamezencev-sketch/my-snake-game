@@ -1,3 +1,4 @@
+// 1. Настройка игры
 const config = {
     type: Phaser.AUTO,
     width: 800,
@@ -12,7 +13,7 @@ const config = {
         default: 'arcade',
         arcade: { gravity: { y: 0 }, debug: false }
     },
-    scene: [GameScene]
+    scene: [MenuScene, GameScene]
 };
 
 const game = new Phaser.Game(config);
@@ -34,7 +35,7 @@ MenuScene.prototype.create = function() {
         graphics.fillCircle(Phaser.Math.Between(0, 800), Phaser.Math.Between(0, 600), size);
     }
     graphics.generateTexture('menu_bg', 800, 600);
-    graphics.destroy(); // Уничтожаем, чтобы не мешал
+    graphics.destroy();
 
     this.add.image(400, 300, 'menu_bg');
 
@@ -80,72 +81,68 @@ GameScene.prototype.create = function() {
     hasMeteor = false; hasDrone = false; satellites = [];
     enemyHpMultiplier = 1; spawnRate = 1500;
 
-    // --- БЕЗОПАСНАЯ ГЕНЕРАЦИЯ ТЕКСТУР ---
-    
-    // Игрок
+    // Безопасная генерация текстур
     let g1 = this.make.graphics({x: 0, y: 0, add: false});
     g1.fillStyle(0xffffff, 1); g1.fillRect(0, 0, 24, 24);
     g1.fillStyle(0x00aaff, 1); g1.fillRect(16, 4, 8, 16);
     g1.generateTexture('player', 24, 24);
     g1.destroy();
 
-    // Враг Слизень
     let g2 = this.make.graphics({x: 0, y: 0, add: false});
     g2.fillStyle(0x00ff44, 1); g2.fillCircle(15, 15, 15); 
     g2.generateTexture('enemy_slime', 30, 30);
     g2.destroy();
 
-    // Враг Летун
     let g3 = this.make.graphics({x: 0, y: 0, add: false});
     g3.fillStyle(0xaa00ff, 1); g3.fillTriangle(15, 0, 30, 30, 0, 30); 
     g3.generateTexture('enemy_flyer', 30, 30);
     g3.destroy();
 
-    // Враг Танк
     let g4 = this.make.graphics({x: 0, y: 0, add: false});
     g4.fillStyle(0xff3300, 1); g4.fillRect(0, 0, 40, 40); 
     g4.generateTexture('enemy_tank', 40, 40);
     g4.destroy();
 
-    // Пуля
     let g5 = this.make.graphics({x: 0, y: 0, add: false});
     g5.fillStyle(0x00ffff, 1); g5.fillRect(0, 0, 15, 4);
     g5.generateTexture('bullet', 15, 4);
     g5.destroy();
 
-    // Звезда
+    // Звезда (ромб)
     let g6 = this.make.graphics({x: 0, y: 0, add: false});
-    g6.fillStyle(0xffff00, 1); g6.fillStar(10, 10, 5, 10, 5);
+    g6.fillStyle(0xffff00, 1); 
+    g6.beginPath();
+    g6.moveTo(10, 0);
+    g6.lineTo(20, 10);
+    g6.lineTo(10, 20);
+    g6.lineTo(0, 10);
+    g6.closePath();
+    g6.fillPath();
     g6.generateTexture('star', 20, 20);
     g6.destroy();
 
-    // Сердце
     let g7 = this.make.graphics({x: 0, y: 0, add: false});
     g7.fillStyle(0xff0000, 1); 
     g7.fillCircle(7, 7, 7); g7.fillCircle(17, 7, 7); g7.fillTriangle(0, 10, 24, 10, 12, 24);
     g7.generateTexture('heart', 24, 24);
     g7.destroy();
 
-    // Метеорит
     let g8 = this.make.graphics({x: 0, y: 0, add: false});
     g8.fillStyle(0xff5500, 1); g8.fillCircle(20, 20, 20);
     g8.generateTexture('meteor', 40, 40);
     g8.destroy();
 
-    // Кратер
     let g9 = this.make.graphics({x: 0, y: 0, add: false});
     g9.fillStyle(0x1a1a1a, 1); g9.fillCircle(40, 40, 40);
     g9.lineStyle(4, 0x333333, 1); g9.strokeCircle(40, 40, 40);
     g9.generateTexture('crater', 80, 80);
     g9.destroy();
 
-    // Спутник
     let g10 = this.make.graphics({x: 0, y: 0, add: false});
     g10.fillStyle(0x00ffff, 1); g10.fillCircle(10, 10, 10);
     g10.generateTexture('satellite', 20, 20);
     g10.destroy();
 
-    // Фон
     let g11 = this.make.graphics({x: 0, y: 0, add: false});
     g11.fillStyle(0x000000, 1); g11.fillRect(0, 0, 800, 600);
     for (let i = 0; i < 150; i++) {
@@ -156,7 +153,6 @@ GameScene.prototype.create = function() {
     g11.generateTexture('bg_tile', 800, 600);
     g11.destroy();
 
-    // --- МИР ---
     this.add.tileSprite(-2500, -2500, 5000, 5000, 'bg_tile').setOrigin(0);
     this.physics.world.setBounds(-2500, -2500, 5000, 5000);
     this.cameras.main.setBounds(-2500, -2500, 5000, 5000);
@@ -179,7 +175,6 @@ GameScene.prototype.create = function() {
     enemies = this.physics.add.group();
     xpOrbs = this.physics.add.group();
 
-    // UI
     let uiContainer = this.add.container(0, 0).setScrollFactor(0).setDepth(100);
     let uiBg = this.add.rectangle(400, 20, 800, 40, 0x000000).setOrigin(0.5).setAlpha(0.7);
     xpBar = this.add.rectangle(0, 20, 0, 20, 0xffff00).setOrigin(0, 0.5);
@@ -195,7 +190,6 @@ GameScene.prototype.create = function() {
     cursors = this.input.keyboard.createCursorKeys();
     keys = this.input.keyboard.addKeys('W,A,S,D');
 
-    // Джойстик
     this.input.on('pointerdown', (pointer) => {
         if (pointer.x < 400 && !isPaused && !gameOver) {
             joystick.active = true;
