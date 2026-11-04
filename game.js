@@ -22,19 +22,40 @@ BootScene.prototype.create = function() {
     let g = this.make.graphics({x: 0, y: 0, add: false});
     let p = 4;
 
-    // Космонавты
+    // --- КОСМОНАВТЫ (Ранец всегда слева) ---
     // Классический
-    g.clear(); g.fillStyle(0xffffff, 1); g.fillRect(2*p, 2*p, 4*p, 2*p); g.fillRect(1*p, 4*p, 6*p, 4*p); g.fillRect(2*p, 8*p, 4*p, 4*p); g.fillRect(1*p, 8*p, 1*p, 4*p); g.fillRect(6*p, 8*p, 1*p, 4*p); g.fillRect(2*p, 12*p, 1*p, 2*p); g.fillRect(5*p, 12*p, 1*p, 2*p); g.fillStyle(0x1a1a3a, 1); g.fillRect(2*p, 4*p, 4*p, 4*p); g.fillStyle(0xccccff, 1); g.fillRect(2*p, 4*p, 2*p, 2*p); g.fillStyle(0xff0000, 1); g.fillRect(2*p, 9*p, 1*p, 1*p); g.fillStyle(0x00ffff, 1); g.fillRect(3*p, 9*p, 1*p, 1*p); g.fillStyle(0x555555, 1); g.fillRect(7*p, 6*p, 2*p, 6*p); g.fillStyle(0x333333, 1); g.fillRect(8*p, 12*p, 1*p, 2*p); g.generateTexture('player_classic', 10*p, 16*p);
+    g.clear();
+    g.fillStyle(0xffffff, 1);
+    g.fillRect(2*p, 2*p, 4*p, 2*p); g.fillRect(1*p, 4*p, 6*p, 4*p); g.fillRect(2*p, 8*p, 4*p, 4*p);
+    g.fillRect(1*p, 8*p, 1*p, 4*p); g.fillRect(6*p, 8*p, 1*p, 4*p); g.fillRect(2*p, 12*p, 1*p, 2*p); g.fillRect(5*p, 12*p, 1*p, 2*p);
+    g.fillStyle(0x1a1a3a, 1); g.fillRect(2*p, 4*p, 4*p, 4*p); g.fillStyle(0xccccff, 1); g.fillRect(2*p, 4*p, 2*p, 2*p);
+    g.fillStyle(0xff0000, 1); g.fillRect(2*p, 9*p, 1*p, 1*p); g.fillStyle(0x00ffff, 1); g.fillRect(3*p, 9*p, 1*p, 1*p);
+    g.fillStyle(0x555555, 1); g.fillRect(0*p, 6*p, 1*p, 6*p); // Ранец слева
+    g.generateTexture('player_classic', 8*p, 16*p);
 
-    // Тяжелый
-    g.clear(); g.fillStyle(0xff5500, 1); g.fillRect(1*p, 1*p, 6*p, 2*p); g.fillRect(0*p, 3*p, 8*p, 5*p); g.fillRect(1*p, 8*p, 6*p, 4*p); g.fillRect(0*p, 8*p, 1*p, 4*p); g.fillRect(7*p, 8*p, 1*p, 4*p); g.fillRect(1*p, 12*p, 2*p, 3*p); g.fillRect(5*p, 12*p, 2*p, 3*p); g.fillStyle(0x222222, 1); g.fillRect(2*p, 3*p, 4*p, 3*p); g.fillStyle(0xffff00, 1); g.fillRect(2*p, 9*p, 1*p, 1*p); g.fillRect(4*p, 9*p, 1*p, 1*p); g.fillStyle(0x333333, 1); g.fillRect(8*p, 5*p, 2*p, 8*p); g.generateTexture('player_heavy', 10*p, 16*p);
+    // Тяжелый (слева)
+    g.clear();
+    g.fillStyle(0xff5500, 1);
+    g.fillRect(1*p, 1*p, 6*p, 2*p); g.fillRect(0*p, 3*p, 8*p, 5*p); g.fillRect(1*p, 8*p, 6*p, 4*p);
+    g.fillRect(0*p, 8*p, 1*p, 4*p); g.fillRect(7*p, 8*p, 1*p, 4*p); g.fillRect(1*p, 12*p, 2*p, 3*p); g.fillRect(5*p, 12*p, 2*p, 3*p);
+    g.fillStyle(0x222222, 1); g.fillRect(2*p, 3*p, 4*p, 3*p);
+    g.fillStyle(0xffff00, 1); g.fillRect(2*p, 9*p, 1*p, 1*p); g.fillRect(4*p, 9*p, 1*p, 1*p);
+    g.fillStyle(0x333333, 1); g.fillRect(0*p, 5*p, 2*p, 6*p); // Ранец слева
+    g.generateTexture('player_heavy', 8*p, 16*p);
 
-    // Разведчик
-    g.clear(); g.fillStyle(0x333333, 1); g.fillRect(3*p, 2*p, 3*p, 2*p); g.fillRect(2*p, 4*p, 5*p, 5*p); g.fillRect(3*p, 9*p, 3*p, 3*p); g.fillRect(1*p, 9*p, 1*p, 3*p); g.fillRect(6*p, 9*p, 1*p, 3*p); g.fillRect(3*p, 12*p, 1*p, 2*p); g.fillRect(5*p, 12*p, 1*p, 2*p); g.fillStyle(0x00ff00, 1); g.fillRect(3*p, 5*p, 3*p, 2*p); g.fillStyle(0x555555, 1); g.fillRect(7*p, 7*p, 2*p, 5*p); g.generateTexture('player_scout', 10*p, 16*p);
+    // Разведчик (слева)
+    g.clear();
+    g.fillStyle(0x333333, 1);
+    g.fillRect(3*p, 2*p, 3*p, 2*p); g.fillRect(2*p, 4*p, 5*p, 5*p); g.fillRect(3*p, 9*p, 3*p, 3*p);
+    g.fillRect(1*p, 9*p, 1*p, 3*p); g.fillRect(6*p, 9*p, 1*p, 3*p); g.fillRect(3*p, 12*p, 1*p, 2*p); g.fillRect(5*p, 12*p, 1*p, 2*p);
+    g.fillStyle(0x00ff00, 1); g.fillRect(3*p, 5*p, 3*p, 2*p);
+    g.fillStyle(0x555555, 1); g.fillRect(0*p, 6*p, 1*p, 5*p); // Ранец слева
+    g.generateTexture('player_scout', 8*p, 16*p);
 
+    // Частица огня
     g.clear(); g.fillStyle(0xff8800, 1); g.fillCircle(3, 3, 3); g.generateTexture('flame', 6, 6);
 
-    // Враги
+    // --- ПРИШЕЛЬЦЫ ---
     g.clear(); g.fillStyle(0x00ff00, 1); g.fillRect(2*p, 1*p, 4*p, 2*p); g.fillRect(1*p, 3*p, 6*p, 3*p); g.fillRect(0*p, 4*p, 1*p, 1*p); g.fillRect(7*p, 4*p, 1*p, 1*p); g.fillStyle(0x000000, 1); g.fillRect(3*p, 2*p, 1*p, 1*p); g.fillRect(5*p, 2*p, 1*p, 1*p); g.generateTexture('enemy_small', 8*p, 6*p);
     g.clear(); g.fillStyle(0xaa00ff, 1); g.fillRect(1*p, 0*p, 6*p, 2*p); g.fillRect(2*p, 2*p, 4*p, 4*p); g.fillRect(1*p, 3*p, 1*p, 3*p); g.fillRect(6*p, 3*p, 1*p, 3*p); g.fillStyle(0xffffff, 1); g.fillRect(3*p, 2*p, 1*p, 1*p); g.fillRect(5*p, 2*p, 1*p, 1*p); g.generateTexture('enemy_medium', 8*p, 6*p);
     g.clear(); g.fillStyle(0xff0044, 1); g.fillRect(1*p, 1*p, 6*p, 5*p); g.fillRect(0*p, 2*p, 1*p, 3*p); g.fillRect(7*p, 2*p, 1*p, 3*p); g.fillStyle(0x000000, 1); g.fillRect(2*p, 2*p, 4*p, 2*p); g.generateTexture('enemy_tank', 8*p, 7*p);
@@ -43,14 +64,14 @@ BootScene.prototype.create = function() {
     // Босс
     g.clear(); g.fillStyle(0x8800ff, 1); g.fillCircle(64, 64, 60); g.fillStyle(0xff0000, 1); g.fillCircle(40, 40, 15); g.fillCircle(88, 40, 15); g.fillCircle(64, 80, 20); g.generateTexture('enemy_boss', 128, 128);
 
-    // Магазин
+    // --- МАГАЗИН ---
     g.clear(); g.fillStyle(0xeeeeee, 1); g.fillRect(10, 20, 44, 40); g.fillStyle(0xdddddd, 1); g.fillTriangle(10, 20, 32, 0, 54, 20); g.fillStyle(0xff0000, 1); g.fillTriangle(10, 60, 10, 40, 0, 60); g.fillTriangle(54, 60, 54, 40, 64, 60); g.fillStyle(0x333333, 1); g.fillRect(24, 40, 16, 20); g.fillStyle(0xff0000, 1); g.fillRect(14, 24, 36, 10); g.generateTexture('shop_closed', 64, 64);
     g.clear(); g.fillStyle(0xeeeeee, 1); g.fillRect(10, 20, 44, 40); g.fillStyle(0xdddddd, 1); g.fillTriangle(10, 20, 32, 0, 54, 20); g.fillStyle(0xff0000, 1); g.fillTriangle(10, 60, 10, 40, 0, 60); g.fillTriangle(54, 60, 54, 40, 64, 60); g.fillStyle(0x333333, 1); g.fillRect(24, 40, 16, 20); g.fillStyle(0x00ff00, 1); g.fillRect(14, 24, 36, 10); g.generateTexture('shop_open', 64, 64);
 
-    // Остальное
+    // --- ПРЕПЯТСТВИЯ (Только камни, без черных дыр и терминалов) ---
     g.clear(); g.fillStyle(0x333333, 1); g.fillCircle(24, 24, 22); g.fillStyle(0x222222, 1); g.fillCircle(15, 15, 6); g.fillCircle(30, 25, 8); g.generateTexture('obstacle_rock', 48, 48);
-    g.clear(); g.fillStyle(0x666666, 1); g.fillRect(10, 10, 30, 30); g.fillStyle(0x999999, 1); g.fillRect(15, 15, 5, 20); g.fillStyle(0xff0000, 1); g.fillRect(25, 25, 10, 10); g.generateTexture('obstacle_debris', 50, 50);
-    g.clear(); g.fillStyle(0x000000, 1); g.fillCircle(30, 30, 28); g.lineStyle(4, 0x8800ff, 0.8); g.strokeCircle(30, 30, 28); g.generateTexture('obstacle_blackhole', 60, 60);
+
+    // --- ОСТАЛЬНОЕ ---
     g.clear(); g.fillStyle(0x00ffff, 1); g.fillRect(0, 0, 12, 4); g.generateTexture('bullet_pistol', 12, 4);
     g.clear(); g.fillStyle(0xffaa00, 1); g.fillRect(0, 0, 8, 4); g.generateTexture('bullet_shotgun', 8, 4);
     g.clear(); g.fillStyle(0xff00ff, 1); g.fillRect(0, 0, 18, 3); g.generateTexture('bullet_rifle', 18, 3);
@@ -154,7 +175,6 @@ let shopPhaseTimer = 0, shopOpen = false;
 let joystick = { active: false, startX: 0, startY: 0, curX: 0, curY: 0, base: null, thumb: null };
 let currentBoss = null;
 
-// Новые переменные для карточек
 let vampirismChance = 0;
 let isExplosive = false;
 let attackRange = 500;
@@ -176,12 +196,9 @@ GameScene.prototype.create = function() {
     for(let i = 0; i < 20; i++) {
         let cx = Phaser.Math.Between(-2000, 2000); let cy = Phaser.Math.Between(-2000, 2000);
         if (Phaser.Math.Distance.Between(0, 0, cx, cy) > 300) { 
-            let type = Phaser.Math.RND.pick(['obstacle_rock', 'obstacle_debris', 'obstacle_blackhole']);
-            let obs = obstacles.create(cx, cy, type); 
+            let obs = obstacles.create(cx, cy, 'obstacle_rock'); 
             obs.setScale(Phaser.Math.FloatBetween(0.8, 1.5)); 
-            if(type === 'obstacle_rock') obs.body.setCircle(22, 2, 2);
-            else if(type === 'obstacle_debris') obs.body.setSize(40, 40);
-            else if(type === 'obstacle_blackhole') obs.body.setCircle(28, 2, 2);
+            obs.body.setCircle(22, 2, 2);
         }
     }
 
@@ -198,7 +215,7 @@ GameScene.prototype.create = function() {
     player.setCollideWorldBounds(true); 
     player.body.setCircle(12, 4, 4); 
     this.cameras.main.startFollow(player, true, 0.1, 0.1);
-    this.cameras.main.setZoom(0.6);
+    this.cameras.main.setZoom(0.7); // Умеренный зум
 
     player.flameEmitter = this.add.particles(0, 0, 'flame', {
         speed: { min: 20, max: 50 }, scale: { start: 0.8, end: 0 }, lifespan: 200, frequency: 50, quantity: 2
@@ -208,21 +225,21 @@ GameScene.prototype.create = function() {
 
     bullets = this.physics.add.group(); enemies = this.physics.add.group(); xpOrbs = this.physics.add.group(); coins = this.physics.add.group();
 
-    // Интерфейс
+    // ИНТЕРФЕЙС (По углам)
     let ui = this.add.container(0, 0).setScrollFactor(0).setDepth(100);
     ui.add(this.add.rectangle(400, 20, 800, 40, 0x000000).setOrigin(0.5).setAlpha(0.8));
     xpBar = this.add.rectangle(0, 20, 0, 20, 0x00ffff).setOrigin(0, 0.5);
-    levelText = this.add.text(30, 50, 'LVL: 1', { ...pixelFont, fontSize: '24px', fill: '#00ffff' });
-    timeText = this.add.text(400, 10, '00:00', { ...pixelFont, fontSize: '24px', fill: '#ffffff' }).setOrigin(0.5, 0);
-    coinText = this.add.text(780, 50, '🪙: 0', { ...pixelFont, fontSize: '24px', fill: '#ffff00' }).setOrigin(1, 0);
+    levelText = this.add.text(20, 10, 'LVL: 1', { ...pixelFont, fontSize: '18px', fill: '#00ffff' });
+    timeText = this.add.text(400, 10, '00:00', { ...pixelFont, fontSize: '18px', fill: '#ffffff' }).setOrigin(0.5, 0);
+    coinText = this.add.text(780, 10, '🪙: 0', { ...pixelFont, fontSize: '18px', fill: '#ffff00' }).setOrigin(1, 0);
     ui.add([xpBar, levelText, timeText, coinText]);
 
-    ammoText = this.add.text(30, 110, 'AMMO: 12/12', { ...pixelFont, fontSize: '18px', fill: '#fff' }).setScrollFactor(0).setDepth(100);
-    reloadBar = this.add.rectangle(30, 140, 0, 8, 0xff0000).setOrigin(0, 0.5).setScrollFactor(0).setDepth(100);
+    ammoText = this.add.text(20, 80, 'AMMO: 12/12', { ...pixelFont, fontSize: '14px', fill: '#fff' }).setScrollFactor(0).setDepth(100);
+    reloadBar = this.add.rectangle(20, 105, 0, 6, 0xff0000).setOrigin(0, 0.5).setScrollFactor(0).setDepth(100);
     bossHpBar = this.add.rectangle(400, 80, 0, 15, 0xff0000).setScrollFactor(0).setDepth(100).setVisible(false);
 
     for (let i = 0; i < maxHealth; i++) {
-        hearts.push(this.add.image(50 + i * 40, 180, 'heart').setScale(1.5).setScrollFactor(0).setDepth(100));
+        hearts.push(this.add.image(40 + i * 30, 140, 'heart').setScale(1.2).setScrollFactor(0).setDepth(100));
     }
 
     cursors = this.input.keyboard.createCursorKeys(); keys = this.input.keyboard.addKeys('W,A,S,D');
@@ -322,17 +339,9 @@ GameScene.prototype.update = function(time, delta) {
         bossHpBar.width = (currentBoss.hp / currentBoss.maxHp) * 400; bossHpBar.setVisible(true);
     } else { bossHpBar.setVisible(false); }
 
-    enemies.getChildren().forEach(e => { 
-        if (e.active) { this.physics.moveToObject(e, player, e.speed); e.setFlipX(e.x > player.x); } 
-    });
-    xpOrbs.getChildren().forEach(xp => { 
-        let dist = Phaser.Math.Distance.Between(player.x, player.y, xp.x, xp.y);
-        if (dist < pickupRadius) this.physics.moveToObject(xp, player, 400); 
-    });
-    coins.getChildren().forEach(c => { 
-        let dist = Phaser.Math.Distance.Between(player.x, player.y, c.x, c.y);
-        if (dist < pickupRadius) this.physics.moveToObject(c, player, 400); 
-    });
+    enemies.getChildren().forEach(e => { if (e.active) { this.physics.moveToObject(e, player, e.speed); e.setFlipX(e.x > player.x); } });
+    xpOrbs.getChildren().forEach(xp => { if (Phaser.Math.Distance.Between(player.x, player.y, xp.x, xp.y) < pickupRadius) this.physics.moveToObject(xp, player, 400); });
+    coins.getChildren().forEach(c => { if (Phaser.Math.Distance.Between(player.x, player.y, c.x, c.y) < pickupRadius) this.physics.moveToObject(c, player, 400); });
 };
 
 function shoot(scene) {
@@ -413,14 +422,11 @@ function killEnemy(scene, e) {
     let xp = xpOrbs.create(e.x, e.y, 'xp_gem'); xp.setScale(0.5);
     let c = coins.create(e.x, e.y, 'coin'); c.setScale(0.5);
 
-    // Вампиризм
     if (Math.random() < vampirismChance && playerHealth < maxHealth) {
         playerHealth++; hearts[playerHealth-1].clearTint();
     }
 
-    if (e.isBoss) { 
-        for(let i=0; i<15; i++){ let x = xpOrbs.create(e.x, e.y, 'xp_gem'); if(i<5) coins.create(e.x, e.y, 'coin'); } 
-    }
+    if (e.isBoss) { for(let i=0; i<15; i++){ let x = xpOrbs.create(e.x, e.y, 'xp_gem'); if(i<5) coins.create(e.x, e.y, 'coin'); } }
 }
 function collectXp(p, x) { x.destroy(); playerXp += 5; xpBar.width = (playerXp / xpToNextLevel) * 800; if (playerXp >= xpToNextLevel) levelUp.call(this); }
 function collectCoin(p, c) { c.destroy(); playerCoins++; coinText.setText('🪙: ' + playerCoins); }
@@ -482,7 +488,7 @@ function levelUp() {
         { title: 'СКОРОСТЬ', desc: '+20 к скорости', color: 0x333333, action: () => moveSpeed += 20 },
         { title: 'ЛЕЧЕНИЕ', desc: 'Восстановить 1 HP', color: 0x333333, action: () => { if (playerHealth < maxHealth) { playerHealth++; hearts[playerHealth-1].clearTint(); } } },
         { title: 'ДОП. ПУЛЯ', desc: '+1 снаряд', color: 0x113355, action: () => bulletCount = Math.min(bulletCount + 1, 7) },
-        { title: 'МАКС. HP', desc: '+1 сердечко', color: 0x551155, action: () => { maxHealth++; playerHealth = maxHealth; let newHeart = this.add.image(30 + (maxHealth - 1) * 40, 140, 'heart').setScale(1.5).setScrollFactor(0).setDepth(100); hearts.push(newHeart); hearts.forEach(h => h.clearTint()); } },
+        { title: 'МАКС. HP', desc: '+1 сердечко', color: 0x551155, action: () => { maxHealth++; playerHealth = maxHealth; let newHeart = this.add.image(40 + (maxHealth - 1) * 30, 140, 'heart').setScale(1.2).setScrollFactor(0).setDepth(100); hearts.push(newHeart); hearts.forEach(h => h.clearTint()); } },
         { title: 'МЕТЕОРИТ', desc: 'Падает чаще', color: 0x551155, action: () => { hasMeteor = true; meteorFallSpeed = Math.max(1000, meteorFallSpeed - 500); } },
         { title: 'ДРОН', desc: '+1 дрон', color: 0x551155, action: () => { if (drones.length < 4) { let d = this.add.circle(0, 0, 8, 0x00ffff).setDepth(5); d.lastFired = 0; drones.push(d); } } },
         { title: 'СПУТНИК', desc: 'Вращается и бьет', color: 0x551155, action: () => { if (satellites.length < 3) { let s = this.add.image(player.x, player.y, 'satellite').setDepth(5); satellites.push(s); } } },
