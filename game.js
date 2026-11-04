@@ -40,7 +40,7 @@ GameScene.prototype.constructor = GameScene;
 let player, bullets, enemies, xpOrbs, craters, coins, shops;
 let satellites = [], drone;
 let playerXp = 0, playerLevel = 1, xpToNextLevel = 100;
-let xpBar, levelText, hearts = [], playerHealth = 3, maxHealth = 3; // Добавили maxHealth
+let xpBar, levelText, hearts = [], playerHealth = 3, maxHealth = 3;
 let playerCoins = 0, coinText;
 let isInvulnerable = false, gameOver = false, isPaused = false;
 let cursors, keys;
@@ -118,7 +118,6 @@ GameScene.prototype.create = function() {
     coinText = this.add.text(680, 60, '🪙: 0', { fontSize: '24px', fill: '#ffff00' });
     ui.add([xpBar, levelText, timeText, coinText]);
 
-    // Создаем сердечки в зависимости от maxHealth
     for (let i = 0; i < maxHealth; i++) {
         hearts.push(this.add.image(30 + i * 30, 60, 'heart').setScrollFactor(0).setDepth(100));
     }
@@ -229,7 +228,7 @@ function spawnEnemy() {
     if (rand > 0.7 && gameTime > 20000) { type = 'enemy_flyer'; speed = 150; hp = 1; }
     else if (rand > 0.4 && gameTime > 40000) { type = 'enemy_tank'; speed = 50; hp = 3; }
 
-    // СПАВН ЗА ПРЕДЕЛАМИ ЭКРАНА (на расстоянии 600 пикселей от игрока по кругу)
+    // Спавн за пределами экрана на расстоянии 600 от игрока
     let angle = Math.random() * Math.PI * 2;
     let distance = 600; 
     let x = player.x + Math.cos(angle) * distance;
@@ -238,7 +237,6 @@ function spawnEnemy() {
     let e = enemies.create(x, y, type); 
     e.speed = speed; 
     e.hp = Math.floor(hp * enemyHpMultiplier);
-}
 }
 function spawnBoss(scene) {
     let cam = scene.cameras.main;
@@ -315,7 +313,6 @@ function levelUp() {
     let overlay = this.add.rectangle(400, 300, 800, 600, 0x000000, 0.85).setScrollFactor(0).setDepth(200);
     let title = this.add.text(400, 80, 'УЛУЧШЕНИЕ', { fontSize: '40px', fill: '#00ffff' }).setOrigin(0.5).setScrollFactor(0).setDepth(200);
     
-    // ВАЖНО: В карточке макс. HP теперь добавляется новая иконка
     let pool = [
         { title: 'УРОН', desc: '+1 к урону', color: 0x113355, action: () => bulletDamage += 1 },
         { title: 'СКОРОСТЬ АТАКИ', desc: '-15% задержки', color: 0x113355, action: () => fireRate *= 0.85 },
@@ -324,12 +321,9 @@ function levelUp() {
         { title: 'ЛЕЧЕНИЕ', desc: 'Восстановить 1 HP', color: 0x333333, action: () => { if (playerHealth < maxHealth) { playerHealth++; hearts[playerHealth-1].clearTint(); } } },
         { title: 'ДОП. ПУЛЯ', desc: 'Стреляем веером', color: 0x113355, action: () => bulletCount = Math.min(bulletCount + 1, 5) },
         { title: 'МАКС. HP', desc: '+1 сердечко', color: 0x551155, action: () => { 
-            maxHealth++; 
-            playerHealth = maxHealth; // Лечим до полного
-            // Добавляем новую иконку сердечка на экран
+            maxHealth++; playerHealth = maxHealth; 
             let newHeart = this.add.image(30 + (maxHealth - 1) * 30, 60, 'heart').setScrollFactor(0).setDepth(100);
             hearts.push(newHeart);
-            // Восстанавливаем цвет всем сердечкам
             hearts.forEach(h => h.clearTint());
         } },
         { title: 'МЕТЕОРИТ', desc: 'Падает раз в 5 сек', color: 0x551155, action: () => hasMeteor = true },
@@ -340,7 +334,7 @@ function levelUp() {
     ];
 
     Phaser.Utils.Array.Shuffle(pool); let choices = pool.slice(0, 3); let elements = [overlay, title];
-       choices.forEach((c, i) => {
+    choices.forEach((c, i) => {
         let y = 200 + i * 130;
         let bg = this.add.rectangle(400, y, 500, 100, c.color).setStrokeStyle(2, 0xffffff).setScrollFactor(0).setDepth(200);
         let t1 = this.add.text(400, y - 20, c.title, { fontSize: '24px', fill: '#fff' }).setOrigin(0.5).setScrollFactor(0).setDepth(200);
