@@ -38,15 +38,15 @@ GameScene.prototype = Object.create(Phaser.Scene.prototype);
 GameScene.prototype.constructor = GameScene;
 
 let player, bullets, enemies, xpOrbs, craters, coins, shops;
-let satellites = [], drone;
+let satellites = [], drones = []; // Массив для дронов
 let playerXp = 0, playerLevel = 1, xpToNextLevel = 100;
 let xpBar, levelText, hearts = [], playerHealth = 3, maxHealth = 3;
 let playerCoins = 0, coinText;
 let isInvulnerable = false, gameOver = false, isPaused = false;
 let cursors, keys;
 let fireRate = 800, bulletDamage = 1, moveSpeed = 250, bulletCount = 1, pickupRadius = 100;
-let hasMeteor = false, hasDrone = false, droneFireRate = 1000;
-let lastFired = 0, lastDroneFired = 0, meteorTimer = 0;
+let hasMeteor = false, droneFireRate = 1000, meteorFallSpeed = 5000;
+let lastFired = 0, meteorTimer = 0;
 let gameTime = 0, timeText, difficultyTimer = 0, enemyHpMultiplier = 1, spawnRate = 1500, spawnTimer;
 let bossSpawnTimer = 0;
 let vampirismChance = 0;
@@ -54,10 +54,10 @@ let vampirismChance = 0;
 let currentWeapon = 'pistol';
 let ownedWeapons = { pistol: true, shotgun: false, rifle: false, rpg: false };
 let weaponStats = {
-    pistol: { fireRate: 800, bulletCount: 1, spread: 0, damage: 1, color: 0x00ffff, speed: 600, maxAmmo: 12, reloadTime: 1000 },
-    shotgun: { fireRate: 1200, bulletCount: 3, spread: 0.15, damage: 0.7, color: 0xffaa00, speed: 500, maxAmmo: 6, reloadTime: 1500 },
-    rifle: { fireRate: 150, bulletCount: 1, spread: 0.05, damage: 0.8, color: 0xff00ff, speed: 800, maxAmmo: 30, reloadTime: 1500 },
-    rpg: { fireRate: 2000, bulletCount: 1, spread: 0, damage: 3, color: 0xff0000, speed: 400, maxAmmo: 3, reloadTime: 2500 }
+    pistol: { fireRate: 800, bulletCount: 1, spread: 0, damage: 1, color: 0x00ffff, speed: 600, maxAmmo: 12, reloadTime: 1500 },
+    shotgun: { fireRate: 1200, bulletCount: 4, spread: 0.05, damage: 0.7, color: 0xffaa00, speed: 500, maxAmmo: 6, reloadTime: 2000 },
+    rifle: { fireRate: 150, bulletCount: 1, spread: 0.05, damage: 0.8, color: 0xff00ff, speed: 800, maxAmmo: 30, reloadTime: 2000 },
+    rpg: { fireRate: 2000, bulletCount: 1, spread: 0, damage: 3, color: 0xff0000, speed: 400, maxAmmo: 3, reloadTime: 3000 }
 };
 
 let currentAmmo = 12;
@@ -78,7 +78,7 @@ GameScene.prototype.create = function() {
     gameOver = false; isPaused = false; playerHealth = 3; maxHealth = 3; hearts = []; playerXp = 0; playerLevel = 1; xpToNextLevel = 100; gameTime = 0; playerCoins = 0;
     currentWeapon = 'pistol'; ownedWeapons = { pistol: true, shotgun: false, rifle: false, rpg: false };
     fireRate = weaponStats.pistol.fireRate; bulletDamage = weaponStats.pistol.damage; bulletCount = weaponStats.pistol.bulletCount;
-    hasMeteor = false; hasDrone = false; satellites = []; vampirismChance = 0;
+    hasMeteor = false; satellites = []; drones = []; vampirismChance = 0; droneFireRate = 1000; meteorFallSpeed = 5000;
     enemyHpMultiplier = 1; spawnRate = 1500; bossSpawnTimer = 0; shopPhaseTimer = 0; shopOpen = false;
     currentAmmo = weaponStats.pistol.maxAmmo; isReloading = false;
 
@@ -119,11 +119,10 @@ GameScene.prototype.create = function() {
     }
 
     player = this.physics.add.sprite(0, 0, 'player');
-    player.setScale(0.1); // Размер картинки
-    player.setOrigin(0.5, 0.5); // Центрируем картинку
-    // Включаем тело физики и ставим его по центру
-    player.body.setSize(player.width * 0.1, player.height * 0.1); 
-    player.body.setOffset(player.width * 0.45, player.height * 0.45);
+    player.setScale(0.3); 
+    player.setOrigin(0.5, 0.5);
+    player.body.setSize(player.width * 0.3, player.height * 0.3); 
+    player.body.setOffset(player.width * 0.35, player.height * 0.35);
 
     player.setCollideWorldBounds(true); this.cameras.main.startFollow(player, true, 0.1, 0.1);
 
@@ -214,11 +213,17 @@ GameScene.prototype.update = function(time, delta) {
         }
     }
 
-    if (hasDrone) {
-        if (!drone) drone = this.add.circle(0, 0, 10, 0x00ffff); drone.setVisible(true);
-        let a = time / 500; drone.x = player.x + Math.cos(a) * 50; drone.y = player.y + Math.sin(a) * 50;
-        if (time > lastDroneFired) { shootFrom(this, drone.x, drone.y); lastDroneFired = time + droneFireRate; }
-    } else if (drone) { drone.setVisible(false); }
+    // Обработка МАССИВА дронов
+    drones.forEach((d, index) => {
+        let a = (time / 500) + (index * (Math.PI * 2 / drones.length));
+        d.x = player.x + Math.cos(a) * 60; 
+        d.y = player.y + Math.sin(a) * 60;
+        
+        if (time > d.lastFired) { 
+            shootFrom(this, d.x, d.y); 
+            d.lastFired = time + droneFireRate; 
+        }
+    });
 
     satellites.forEach((sat, i) => {
         let a = (time / 1000) + (i * (Math.PI * 2 / satellites.length));
@@ -234,7 +239,7 @@ GameScene.prototype.update = function(time, delta) {
         });
     });
 
-    if (hasMeteor) { meteorTimer += delta; if (meteorTimer > 5000) { meteorTimer = 0; castMeteor(this); } }
+    if (hasMeteor) { meteorTimer += delta; if (meteorTimer > meteorFallSpeed) { meteorTimer = 0; castMeteor(this); } }
 
     enemies.getChildren().forEach(e => { if (e.active) this.physics.moveToObject(e, player, e.speed); });
     xpOrbs.getChildren().forEach(xp => { if (Phaser.Math.Distance.Between(player.x, player.y, xp.x, xp.y) < pickupRadius) this.physics.moveToObject(xp, player, 200); });
@@ -245,7 +250,7 @@ function shoot(scene) {
     if (!target) return false;
     
     let distToEnemy = Phaser.Math.Distance.Between(player.x, player.y, target.x, target.y);
-    if (distToEnemy > 400) return false;
+    if (distToEnemy > 400) return false; 
 
     let angle = Phaser.Math.Angle.Between(player.x, player.y, target.x, target.y);
     let s = weaponStats[currentWeapon]; let count = s.bulletCount + (bulletCount - 1);
@@ -299,12 +304,12 @@ function hitEnemy(b, e) {
 function killEnemy(scene, e) {
     e.destroy(); 
     let xp = xpOrbs.create(e.x, e.y, 'star'); 
-    xp.setScale(0.3); 
+    xp.setScale(0.2); 
     xp.setVelocity(Phaser.Math.Between(-50, 50), Phaser.Math.Between(-50, 50));
     
     if (Math.random() < 0.25) { 
         let c = coins.create(e.x, e.y, 'coin'); 
-        c.setScale(0.3); 
+        c.setScale(0.2); 
         c.setVelocity(Phaser.Math.Between(-50, 50), Phaser.Math.Between(-50, 50)); 
     }
     
@@ -341,7 +346,7 @@ function openShop(p, s) {
     let elements = [overlay, title, coinDisplay];
     let weapons = [
         { id: 'pistol', name: 'ПИСТОЛЕТ', price: 0, desc: 'Стандарт' },
-        { id: 'shotgun', name: 'ДРОБОВИК', price: 25, desc: '3 пули' },
+        { id: 'shotgun', name: 'ДРОБОВИК', price: 25, desc: '4 пули' },
         { id: 'rifle', name: 'АВТОМАТ', price: 50, desc: 'Скорострел' },
         { id: 'rpg', name: 'РПГ', price: 100, desc: 'Взрыв' }
     ];
@@ -377,15 +382,24 @@ function levelUp() {
         { title: 'СКОРОСТЬ', desc: '+20 к скорости', color: 0x333333, action: () => moveSpeed += 20 },
         { title: 'МАГНИТ', desc: 'Радиус сбора +50', color: 0x333333, action: () => pickupRadius += 50 },
         { title: 'ЛЕЧЕНИЕ', desc: 'Восстановить 1 HP', color: 0x333333, action: () => { if (playerHealth < maxHealth) { playerHealth++; hearts[playerHealth-1].clearTint(); } } },
-        { title: 'ДОП. ПУЛЯ', desc: 'Стреляем веером', color: 0x113355, action: () => bulletCount = Math.min(bulletCount + 1, 5) },
+        { title: 'ДОП. ПУЛЯ', desc: 'Стреляем веером', color: 0x113355, action: () => bulletCount = Math.min(bulletCount + 1, 7) },
         { title: 'МАКС. HP', desc: '+1 сердечко', color: 0x551155, action: () => { 
             maxHealth++; playerHealth = maxHealth; 
             let newHeart = this.add.image(30 + (maxHealth - 1) * 30, 60, 'heart').setScrollFactor(0).setDepth(100);
             hearts.push(newHeart);
             hearts.forEach(h => h.clearTint());
         } },
-        { title: 'МЕТЕОРИТ', desc: 'Падает раз в 5 сек', color: 0x551155, action: () => hasMeteor = true },
-        { title: 'ДРОН', desc: 'Летает и стреляет', color: 0x551155, action: () => hasDrone = true },
+        { title: 'МЕТЕОРИТ', desc: 'Падает чаще', color: 0x551155, action: () => { 
+            hasMeteor = true; 
+            meteorFallSpeed = Math.max(1000, meteorFallSpeed - 500); 
+        } },
+        { title: 'ДРОН', desc: '+1 дрон', color: 0x551155, action: () => { 
+            if (drones.length < 3) { 
+                let d = this.add.circle(0, 0, 10, 0x00ffff); 
+                d.lastFired = 0;
+                drones.push(d); 
+            }
+        } },
         { title: 'СПУТНИК', desc: 'Вращается и бьет', color: 0x551155, action: () => { if (satellites.length < 3) { let s = this.add.image(player.x, player.y, 'satellite').setDepth(10); satellites.push(s); } } },
         { title: 'ВАМПИРИЗМ', desc: '10% шанс лечения с врага', color: 0x551155, action: () => vampirismChance += 0.1 },
         { title: 'ЗАМЕДЛЕНИЕ', desc: 'Враги на 10% медленнее', color: 0x551155, action: () => { enemies.getChildren().forEach(e => e.speed *= 0.9); } }
