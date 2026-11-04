@@ -19,7 +19,7 @@ BootScene.prototype = Object.create(Phaser.Scene.prototype);
 BootScene.prototype.constructor = BootScene;
 BootScene.prototype.create = function() {
     let g = this.make.graphics({x: 0, y: 0, add: false});
-    let p = 4; // Размер пикселя
+    let p = 4; // Размер одного "пикселя"
 
     // === 1. КОСМОНАВТ (Реактивный ранец) ===
     g.clear();
@@ -31,57 +31,38 @@ BootScene.prototype.create = function() {
     g.fillStyle(0x1a1a3a, 1); g.fillRect(2*p, 4*p, 4*p, 4*p); g.fillStyle(0xccccff, 1); g.fillRect(2*p, 4*p, 2*p, 2*p);
     // Кнопки
     g.fillStyle(0xff0000, 1); g.fillRect(2*p, 9*p, 1*p, 1*p); g.fillStyle(0x00ffff, 1); g.fillRect(3*p, 9*p, 1*p, 1*p);
-    // РЕАКТИВНЫЙ РАНЕЦ (Сзади)
-    g.fillStyle(0x555555, 1); g.fillRect(7*p, 6*p, 2*p, 6*p); // Сам ранец
-    g.fillStyle(0x333333, 1); g.fillRect(8*p, 12*p, 1*p, 2*p); // Сопло
+    // Ранец (сзади)
+    g.fillStyle(0x555555, 1); g.fillRect(7*p, 6*p, 2*p, 6*p); 
+    g.fillStyle(0x333333, 1); g.fillRect(8*p, 12*p, 1*p, 2*p); 
     g.generateTexture('player', 10*p, 16*p);
 
-    // Частица огня для ранца
+    // Частица огня
     g.clear(); g.fillStyle(0xff8800, 1); g.fillCircle(3, 3, 3); g.generateTexture('flame', 6, 6);
 
-    // === 2. ПРИШЕЛЬЦЫ (4 вида) ===
-    // 1. Маленький быстрый (Зеленый)
+    // === 2. ПРИШЕЛЬЦЫ ===
     g.clear(); g.fillStyle(0x00ff00, 1); g.fillRect(2*p, 2*p, 4*p, 4*p); g.fillStyle(0x000000, 1); g.fillRect(3*p, 3*p, 1*p, 2*p); g.fillRect(4*p, 3*p, 1*p, 2*p); g.generateTexture('enemy_small', 8*p, 8*p);
-    // 2. Средний (Фиолетовый)
     g.clear(); g.fillStyle(0xaa00ff, 1); g.fillCircle(4*p, 4*p, 3.5*p); g.fillStyle(0xffffff, 1); g.fillCircle(3*p, 3*p, 1*p); g.fillCircle(5*p, 3*p, 1*p); g.generateTexture('enemy_medium', 8*p, 8*p);
-    // 3. Большой танк (Красный)
     g.clear(); g.fillStyle(0xff0044, 1); g.fillRect(1*p, 1*p, 6*p, 6*p); g.fillStyle(0x000000, 1); g.fillRect(2*p, 2*p, 4*p, 2*p); g.generateTexture('enemy_tank', 8*p, 8*p);
-    // 4. Летающий (Голубой)
     g.clear(); g.fillStyle(0x00ffff, 1); g.fillTriangle(4*p, 0, 8*p, 6*p, 0, 6*p); g.fillStyle(0xffffff, 1); g.fillCircle(4*p, 4*p, 1*p); g.generateTexture('enemy_flyer', 8*p, 8*p);
-
-    // Босс
     g.clear(); g.fillStyle(0x8800ff, 1); g.fillCircle(64, 64, 60); g.fillStyle(0xff0000, 1); g.fillCircle(40, 40, 15); g.fillCircle(88, 40, 15); g.fillCircle(64, 80, 20); g.generateTexture('enemy_boss', 128, 128);
 
     // === 3. МАГАЗИН-РАКЕТА ===
-    g.clear();
-    // Корпус ракеты
-    g.fillStyle(0xeeeeee, 1); g.fillRect(10, 20, 44, 40); 
-    g.fillStyle(0xdddddd, 1); g.fillTriangle(10, 20, 32, 0, 54, 20); // Нос
-    g.fillStyle(0xff0000, 1); g.fillTriangle(10, 60, 10, 40, 0, 60); g.fillTriangle(54, 60, 54, 40, 64, 60); // Крылья
-    // Дверь
-    g.fillStyle(0x333333, 1); g.fillRect(24, 40, 16, 20);
-    // Вывеска ЗАКРЫТО (Красная)
-    g.fillStyle(0xff0000, 1); g.fillRect(14, 24, 36, 10);
-    g.generateTexture('shop_closed', 64, 64);
+    g.clear(); g.fillStyle(0xeeeeee, 1); g.fillRect(10, 20, 44, 40); g.fillStyle(0xdddddd, 1); g.fillTriangle(10, 20, 32, 0, 54, 20); g.fillStyle(0xff0000, 1); g.fillTriangle(10, 60, 10, 40, 0, 60); g.fillTriangle(54, 60, 54, 40, 64, 60); g.fillStyle(0x333333, 1); g.fillRect(24, 40, 16, 20); g.fillStyle(0xff0000, 1); g.fillRect(14, 24, 36, 10); g.generateTexture('shop_closed', 64, 64);
+    g.clear(); g.fillStyle(0xeeeeee, 1); g.fillRect(10, 20, 44, 40); g.fillStyle(0xdddddd, 1); g.fillTriangle(10, 20, 32, 0, 54, 20); g.fillStyle(0xff0000, 1); g.fillTriangle(10, 60, 10, 40, 0, 60); g.fillTriangle(54, 60, 54, 40, 64, 60); g.fillStyle(0x333333, 1); g.fillRect(24, 40, 16, 20); g.fillStyle(0x00ff00, 1); g.fillRect(14, 24, 36, 10); g.generateTexture('shop_open', 64, 64);
 
-    g.clear();
-    g.fillStyle(0xeeeeee, 1); g.fillRect(10, 20, 44, 40); g.fillStyle(0xdddddd, 1); g.fillTriangle(10, 20, 32, 0, 54, 20);
-    g.fillStyle(0xff0000, 1); g.fillTriangle(10, 60, 10, 40, 0, 60); g.fillTriangle(54, 60, 54, 40, 64, 60);
-    g.fillStyle(0x333333, 1); g.fillRect(24, 40, 16, 20);
-    // Вывеска ОТКРЫТО (Зеленая)
-    g.fillStyle(0x00ff00, 1); g.fillRect(14, 24, 36, 10);
-    g.generateTexture('shop_open', 64, 64);
+    // === 4. ПРЕПЯТСТВИЯ ===
+    g.clear(); g.fillStyle(0x333333, 1); g.fillCircle(24, 24, 22); g.fillStyle(0x222222, 1); g.fillCircle(15, 15, 6); g.fillCircle(30, 25, 8); g.generateTexture('obstacle_rock', 48, 48);
+    g.clear(); g.fillStyle(0x666666, 1); g.fillRect(10, 10, 30, 30); g.fillStyle(0x999999, 1); g.fillRect(15, 15, 5, 20); g.fillStyle(0xff0000, 1); g.fillRect(25, 25, 10, 10); g.generateTexture('obstacle_debris', 50, 50);
+    g.clear(); g.fillStyle(0x000000, 1); g.fillCircle(30, 30, 28); g.lineStyle(4, 0x8800ff, 0.8); g.strokeCircle(30, 30, 28); g.generateTexture('obstacle_blackhole', 60, 60);
 
-    // === 4. ОСТАЛЬНОЕ ===
+    // === 5. ОСТАЛЬНОЕ ===
     g.clear(); g.fillStyle(0x00ffff, 1); g.fillRect(0, 0, 12, 4); g.generateTexture('bullet_pistol', 12, 4);
     g.clear(); g.fillStyle(0xffaa00, 1); g.fillRect(0, 0, 8, 4); g.generateTexture('bullet_shotgun', 8, 4);
     g.clear(); g.fillStyle(0xff00ff, 1); g.fillRect(0, 0, 18, 3); g.generateTexture('bullet_rifle', 18, 3);
     g.clear(); g.fillStyle(0xff0000, 1); g.fillRect(0, 0, 12, 6); g.fillStyle(0xffffff, 1); g.fillRect(0, 0, 4, 6); g.generateTexture('bullet_rpg', 12, 6);
-    
     g.clear(); g.fillStyle(0x00ffaa, 1); g.fillTriangle(10, 0, 20, 10, 10, 20); g.fillTriangle(10, 0, 0, 10, 10, 20); g.generateTexture('xp_gem', 20, 20);
     g.clear(); g.fillStyle(0xffcc00, 1); g.fillCircle(10, 10, 10); g.lineStyle(2, 0xffffff, 1); g.strokeCircle(10, 10, 6); g.generateTexture('coin', 20, 20);
     g.clear(); g.fillStyle(0xff0000, 1); g.fillCircle(7, 7, 7); g.fillCircle(17, 7, 7); g.fillTriangle(0, 10, 24, 10, 12, 24); g.fillStyle(0xff8888, 1); g.fillCircle(5, 5, 3); g.generateTexture('heart', 24, 24);
-    g.clear(); g.fillStyle(0x333333, 1); g.fillCircle(24, 24, 22); g.fillStyle(0x222222, 1); g.fillCircle(15, 15, 6); g.fillCircle(30, 25, 8); g.generateTexture('crater', 48, 48);
     g.clear(); g.fillStyle(0xaaaaaa, 1); g.fillRect(6, 6, 12, 12); g.fillStyle(0x00ffff, 1); g.fillRect(0, 10, 4, 4); g.fillRect(20, 10, 4, 4); g.generateTexture('satellite', 24, 24);
     g.clear(); g.fillStyle(0xffffff, 1); g.fillCircle(3, 3, 3); g.generateTexture('particle_white', 6, 6);
     g.clear(); g.fillStyle(0xff0000, 1); g.fillCircle(3, 3, 3); g.generateTexture('particle_red', 6, 6);
@@ -98,7 +79,7 @@ MenuScene.prototype = Object.create(Phaser.Scene.prototype);
 MenuScene.prototype.constructor = MenuScene;
 MenuScene.prototype.create = function() {
     this.add.tileSprite(0, 0, 800, 600, 'bg_tile').setOrigin(0); 
-    this.add.sprite(400, 200, 'player').setScale(4); 
+    this.add.sprite(400, 200, 'player').setScale(3); 
 
     this.add.text(400, 100, 'КОСМИЧЕСКИЙ ВЫЖИВШИЙ', { ...pixelFont, fontSize: '28px', fill: '#00ffff', stroke: '#000', strokeThickness: 6 }).setOrigin(0.5);
     this.add.text(400, 350, 'РЕКОРД: ' + Math.floor(bestTime / 1000) + ' СЕК', { ...pixelFont, fill: '#ffff00' }).setOrigin(0.5);
@@ -115,7 +96,7 @@ function GameScene() { Phaser.Scene.call(this, { key: 'GameScene' }); }
 GameScene.prototype = Object.create(Phaser.Scene.prototype);
 GameScene.prototype.constructor = GameScene;
 
-let player, bullets, enemies, xpOrbs, coins, craters, shops;
+let player, bullets, enemies, xpOrbs, coins, obstacles, shops;
 let satellites = [], drones = [];
 let playerXp = 0, playerLevel = 1, xpToNextLevel = 30;
 let xpBar, levelText, hearts = [], playerHealth = 3, maxHealth = 3;
@@ -150,13 +131,17 @@ GameScene.prototype.create = function() {
     this.physics.world.setBounds(-2500, -2500, 5000, 5000);
     this.cameras.main.setBounds(-2500, -2500, 5000, 5000);
 
-    craters = this.physics.add.staticGroup();
-    for(let i = 0; i < 30; i++) {
+    // Препятствия (камни, обломки, черные дыры)
+    obstacles = this.physics.add.staticGroup();
+    for(let i = 0; i < 20; i++) {
         let cx = Phaser.Math.Between(-2000, 2000); let cy = Phaser.Math.Between(-2000, 2000);
         if (Phaser.Math.Distance.Between(0, 0, cx, cy) > 300) { 
-            let crater = craters.create(cx, cy, 'crater'); 
-            crater.setScale(Phaser.Math.FloatBetween(0.8, 1.5)); 
-            crater.body.setCircle(24, 0, 0); 
+            let type = Phaser.Math.RND.pick(['obstacle_rock', 'obstacle_debris', 'obstacle_blackhole']);
+            let obs = obstacles.create(cx, cy, type); 
+            obs.setScale(Phaser.Math.FloatBetween(0.8, 1.5)); 
+            if(type === 'obstacle_rock') obs.body.setCircle(22, 2, 2);
+            else if(type === 'obstacle_debris') obs.body.setSize(40, 40);
+            else if(type === 'obstacle_blackhole') obs.body.setCircle(28, 2, 2);
         }
     }
 
@@ -171,20 +156,20 @@ GameScene.prototype.create = function() {
 
     player = this.physics.add.sprite(0, 0, 'player');
     player.setCollideWorldBounds(true); 
-    player.body.setCircle(14, 6, 6); 
+    player.body.setCircle(12, 4, 4); 
     this.cameras.main.startFollow(player, true, 0.1, 0.1);
+    this.cameras.main.setZoom(0.6); // УВЕЛИЧЕННЫЙ ОБЗОР
 
-    // Частицы для реактивного ранца
+    // Частицы огня (следуют за игроком)
     player.flameEmitter = this.add.particles(0, 0, 'flame', {
         speed: { min: 20, max: 50 },
-        angle: { min: 80, max: 100 }, // Летят вниз
         scale: { start: 0.8, end: 0 },
         lifespan: 200,
-        frequency: 50, // Пламя появляется часто
+        frequency: 50,
         quantity: 2
     });
-    player.flameEmitter.startFollow(player, 0, 10); // Следует за игроком чуть ниже
-    player.flameEmitter.stop(); // Изначально выключено
+    player.flameEmitter.startFollow(player, 0, 10); 
+    player.flameEmitter.stop();
 
     bullets = this.physics.add.group(); enemies = this.physics.add.group(); xpOrbs = this.physics.add.group(); coins = this.physics.add.group();
 
@@ -228,7 +213,7 @@ GameScene.prototype.create = function() {
     this.physics.add.overlap(player, enemies, playerHit, null, this);
     this.physics.add.overlap(player, xpOrbs, collectXp, null, this);
     this.physics.add.overlap(player, coins, collectCoin, null, this);
-    this.physics.add.collider(player, craters); this.physics.add.collider(enemies, craters);
+    this.physics.add.collider(player, obstacles); this.physics.add.collider(enemies, obstacles);
     this.physics.add.collider(player, shops, openShop, null, this);
 
     this.time.addEvent({ delay: 2000, callback: spawnEnemy, callbackScope: this, loop: true });
@@ -264,10 +249,14 @@ GameScene.prototype.update = function(time, delta) {
     if (len > 0) {
         player.setVelocity((vx/len)*moveSpeed, (vy/len)*moveSpeed);
         player.setFlipX(vx < 0); 
-        if (!player.flameEmitter.emitting) player.flameEmitter.start(); // Включаем огонь при движении
+        // ОГОНЬ ВКЛЮЧАЕТСЯ И ЛЕТИТ ВНИЗ (назад)
+        if (!player.flameEmitter.emitting) {
+            player.flameEmitter.start();
+            player.flameEmitter.angle = { min: 70, max: 110 }; 
+        }
     } else {
         player.setVelocity(0);
-        player.flameEmitter.stop(); // Выключаем огонь при остановке
+        player.flameEmitter.stop(); 
     }
 
     if (time > lastFired && !isReloading && currentAmmo > 0) { 
@@ -388,103 +377,4 @@ function damageEnemy(scene, e, damage) {
     if (e.hp <= 0) killEnemy(scene, e);
 }
 function killEnemy(scene, e) {
-    let emitter = scene.add.particles(e.x, e.y, 'particle_red', { speed: { min: 50, max: 200 }, scale: { start: 1, end: 0 }, lifespan: 300, quantity: 10 });
-    scene.time.delayedCall(300, () => emitter.destroy());
-    if (e.isBoss) { scene.cameras.main.shake(500, 0.02); currentBoss = null; }
-
-    e.destroy(); 
-    let xp = xpOrbs.create(e.x, e.y, 'xp_gem'); xp.setScale(0.5);
-    let c = coins.create(e.x, e.y, 'coin'); c.setScale(0.5);
-
-    if (e.isBoss) { 
-        for(let i=0; i<15; i++){ let x = xpOrbs.create(e.x, e.y, 'xp_gem'); if(i<5) coins.create(e.x, e.y, 'coin'); } 
-    }
-}
-function collectXp(p, x) { x.destroy(); playerXp += 5; xpBar.width = (playerXp / xpToNextLevel) * 800; if (playerXp >= xpToNextLevel) levelUp.call(this); }
-function collectCoin(p, c) { c.destroy(); playerCoins++; coinText.setText('🪙: ' + playerCoins); }
-function playerHit(p, e) {
-    if (gameOver || isInvulnerable) return;
-    playerHealth--; hearts[playerHealth].setTint(0x000000); isInvulnerable = true;
-    this.cameras.main.shake(200, 0.01);
-    let a = Phaser.Math.Angle.Between(e.x, e.y, p.x, p.y); p.setVelocity(Math.cos(a) * 400, Math.sin(a) * 400);
-    this.tweens.add({ targets: p, alpha: 0.2, duration: 100, yoyo: true, repeat: 5 });
-    if (playerHealth <= 0) { 
-        gameOver = true; this.physics.pause(); p.setTint(0xff0000); if (gameTime > bestTime) bestTime = gameTime; 
-        this.add.text(400, 250, 'ИГРА ОКОНЧЕНА', { ...pixelFont, fontSize: '30px', fill: '#ff0000' }).setOrigin(0.5).setScrollFactor(0).setDepth(200);
-        let restartBtn = this.add.text(400, 350, 'ЗАНОВО', { ...pixelFont, fontSize: '16px', backgroundColor: '#333', padding: { x: 20, y: 10 } }).setOrigin(0.5).setInteractive().setScrollFactor(0).setDepth(200);
-        restartBtn.on('pointerdown', () => this.scene.start('MenuScene')); 
-    } else { this.time.delayedCall(1500, () => { isInvulnerable = false; p.alpha = 1; }); }
-}
-function openShop(p, s) {
-    if (!s.getData('isOpen') || isPaused) return;
-    isPaused = true; this.physics.pause();
-    let overlay = this.add.rectangle(400, 300, 800, 600, 0x000000, 0.9).setScrollFactor(0).setDepth(200);
-    let title = this.add.text(400, 50, 'МАГАЗИН', { ...pixelFont, fontSize: '24px', fill: '#00ffff' }).setOrigin(0.5).setScrollFactor(0).setDepth(200);
-    let coinDisplay = this.add.text(400, 100, 'МОНЕТ: ' + playerCoins, { ...pixelFont, fill: '#ffff00' }).setOrigin(0.5).setScrollFactor(0).setDepth(200);
-    let elements = [overlay, title, coinDisplay];
-    let weapons = [
-        { id: 'pistol', name: 'ПИСТОЛЕТ', price: 0, desc: 'Урон 2' },
-        { id: 'shotgun', name: 'ДРОБОВИК', price: 25, desc: '4 пули' },
-        { id: 'rifle', name: 'АВТОМАТ', price: 50, desc: 'Скорострел' },
-        { id: 'rpg', name: 'РПГ', price: 100, desc: 'Взрыв' }
-    ];
-    weapons.forEach((w, i) => {
-        let y = 180 + i * 90;
-        let bg = this.add.rectangle(400, y, 600, 70, 0x113355).setStrokeStyle(2, 0x00ffff).setScrollFactor(0).setDepth(200);
-        let name = this.add.text(150, y, w.name, { ...pixelFont }).setOrigin(0, 0.5).setScrollFactor(0).setDepth(200);
-        let desc = this.add.text(150, y + 20, w.desc, { ...pixelFont, fontSize: '10px', fill: '#aaa' }).setOrigin(0, 0.5).setScrollFactor(0).setDepth(200);
-        let price = this.add.text(650, y, ownedWeapons[w.id] ? 'КУПЛЕНО' : ('🪙 ' + w.price), { ...pixelFont, fill: ownedWeapons[w.id] ? '#00ff00' : '#ffff00' }).setOrigin(1, 0.5).setScrollFactor(0).setDepth(200);
-        let zone = this.add.zone(400, y, 600, 70).setInteractive().setScrollFactor(0).setDepth(200);
-        zone.on('pointerdown', () => {
-            if (ownedWeapons[w.id]) { currentWeapon = w.id; currentAmmo = weaponStats[currentWeapon].maxAmmo; ammoText.setText('AMMO: ' + currentAmmo + '/' + weaponStats[currentWeapon].maxAmmo); elements.forEach(e=>e.destroy()); bg.destroy(); name.destroy(); desc.destroy(); price.destroy(); zone.destroy(); this.physics.resume(); isPaused = false; return; }
-            if (playerCoins >= w.price) {
-                playerCoins -= w.price; ownedWeapons[w.id] = true; currentWeapon = w.id;
-                currentAmmo = weaponStats[currentWeapon].maxAmmo; ammoText.setText('AMMO: ' + currentAmmo + '/' + weaponStats[currentWeapon].maxAmmo);
-                price.setText('КУПЛЕНО').setStyle({ fill: '#00ff00' }); coinDisplay.setText('МОНЕТ: ' + playerCoins);
-            }
-        });
-        elements.push(bg, name, desc, price, zone);
-    });
-    let closeBtn = this.add.text(400, 550, 'ЗАКРЫТЬ', { ...pixelFont, backgroundColor: '#333', padding: { x: 20, y: 10 } }).setOrigin(0.5).setInteractive().setScrollFactor(0).setDepth(200);
-    closeBtn.on('pointerdown', () => { elements.forEach(e => e.destroy()); closeBtn.destroy(); isPaused = false; this.physics.resume(); });
-    elements.push(closeBtn);
-}
-function levelUp() {
-    isPaused = true; this.physics.pause(); playerXp = 0; playerLevel++; xpToNextLevel += 20; xpBar.width = 0; levelText.setText('LVL: ' + playerLevel);
-    let overlay = this.add.rectangle(400, 300, 800, 600, 0x000000, 0.85).setScrollFactor(0).setDepth(200);
-    let title = this.add.text(400, 80, 'ВЫБЕРИ УЛУЧШЕНИЕ', { ...pixelFont, fontSize: '20px', fill: '#00ffff' }).setOrigin(0.5).setScrollFactor(0).setDepth(200);
-    
-    let pool = [
-        { title: 'УРОН', desc: '+1 к урону', color: 0x113355, action: () => bulletDamage += 1 },
-        { title: 'СКОРОСТЬ АТАКИ', desc: 'Быстрее стрельба', color: 0x113355, action: () => fireRate *= 0.85 },
-        { title: 'СКОРОСТЬ', desc: '+20 к скорости', color: 0x333333, action: () => moveSpeed += 20 },
-        { title: 'ЛЕЧЕНИЕ', desc: 'Восстановить 1 HP', color: 0x333333, action: () => { if (playerHealth < maxHealth) { playerHealth++; hearts[playerHealth-1].clearTint(); } } },
-        { title: 'ДОП. ПУЛЯ', desc: '+1 снаряд', color: 0x113355, action: () => bulletCount = Math.min(bulletCount + 1, 7) },
-        { title: 'МАКС. HP', desc: '+1 сердечко', color: 0x551155, action: () => { maxHealth++; playerHealth = maxHealth; let newHeart = this.add.image(30 + (maxHealth - 1) * 30, 60, 'heart').setScrollFactor(0).setDepth(100); hearts.push(newHeart); hearts.forEach(h => h.clearTint()); } },
-        { title: 'МЕТЕОРИТ', desc: 'Падает чаще', color: 0x551155, action: () => { hasMeteor = true; meteorFallSpeed = Math.max(1000, meteorFallSpeed - 500); } },
-        { title: 'ДРОН', desc: '+1 дрон', color: 0x551155, action: () => { if (drones.length < 4) { let d = this.add.circle(0, 0, 8, 0x00ffff).setDepth(5); d.lastFired = 0; drones.push(d); } } },
-        { title: 'СПУТНИК', desc: 'Вращается и бьет', color: 0x551155, action: () => { if (satellites.length < 3) { let s = this.add.image(player.x, player.y, 'satellite').setDepth(5); satellites.push(s); } } }
-    ];
-
-    Phaser.Utils.Array.Shuffle(pool); let choices = pool.slice(0, 3); let elements = [overlay, title];
-    choices.forEach((c, i) => {
-        let y = 200 + i * 130;
-        let bg = this.add.rectangle(400, y, 500, 100, c.color).setStrokeStyle(2, 0xffffff).setScrollFactor(0).setDepth(200);
-        let t1 = this.add.text(400, y - 20, c.title, { ...pixelFont }).setOrigin(0.5).setScrollFactor(0).setDepth(200);
-        let t2 = this.add.text(400, y + 20, c.desc, { ...pixelFont, fontSize: '10px', fill: '#aaa' }).setOrigin(0.5).setScrollFactor(0).setDepth(200);
-        let zone = this.add.zone(400, y, 500, 100).setInteractive().setScrollFactor(0).setDepth(200);
-        zone.on('pointerdown', () => { c.action.call(this); elements.forEach(e => e.destroy()); bg.destroy(); t1.destroy(); t2.destroy(); zone.destroy(); isPaused = false; this.physics.resume(); });
-        elements.push(bg, t1, t2, zone);
-    });
-}
-function castMeteor(scene) {
-    let targets = enemies.getChildren(); if (targets.length === 0) return;
-    Phaser.Utils.Array.Shuffle(targets).slice(0, 3).forEach(e => {
-        let m = scene.add.image(e.x, e.y - 300, 'particle_red').setScale(3);
-        scene.tweens.add({ targets: m, y: e.y, duration: 400, onComplete: () => {
-            m.destroy(); let exp = scene.add.circle(e.x, e.y, 60, 0xff5500, 0.8); scene.time.delayedCall(200, () => exp.destroy());
-            scene.cameras.main.shake(100, 0.005);
-            enemies.getChildren().forEach(en => { if (Phaser.Math.Distance.Between(e.x, e.y, en.x, en.y) < 60) { damageEnemy(scene, en, 3); } });
-        }});
-    });
-}
+    let emitter = scene.add.particles(e.x, e.y, 'particle_red', { speed: { min: 50, max: 200 }, scale: { start:
