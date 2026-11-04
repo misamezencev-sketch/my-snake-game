@@ -13,76 +13,118 @@ const game = new Phaser.Game(config);
 const pixelFont = { fontFamily: '"Press Start 2P"', fontSize: '14px', fill: '#ffffff' };
 let bestTime = 0;
 
-// --- СЦЕНА ЗАГРУЗКИ (Создает красивые текстуры) ---
+// --- СЦЕНА ЗАГРУЗКИ (Рисуем пиксельные спрайты и создаем анимации) ---
 function BootScene() { Phaser.Scene.call(this, { key: 'BootScene' }); }
 BootScene.prototype = Object.create(Phaser.Scene.prototype);
 BootScene.prototype.constructor = BootScene;
 BootScene.prototype.create = function() {
     let g = this.make.graphics({x: 0, y: 0, add: false});
+    let p = 4; // Размер одного "пикселя" в коде
 
-    // 1. КОСМОНАВТ
-    g.fillStyle(0xffffff, 1); g.fillRect(8, 4, 16, 20); // Скафандр
-    g.fillStyle(0x00ffff, 1); g.fillRect(14, 8, 10, 8); // Визор
-    g.fillStyle(0xaaaaaa, 1); g.fillRect(4, 8, 6, 12); // Рюкзак
-    g.fillStyle(0xff4444, 1); g.fillRect(8, 2, 4, 2); // Антенна
-    g.generateTexture('player', 32, 32); g.clear();
+    // === 1. КОСМОНАВТ (4 кадра для анимации) ===
+    function drawAstronaut(frame) {
+        g.clear();
+        // 1. Скафандр (Белый)
+        g.fillStyle(0xffffff, 1);
+        g.fillRect(2*p, 2*p, 4*p, 2*p); // Верх шлема
+        g.fillRect(1*p, 4*p, 6*p, 4*p); // Шлем
+        g.fillRect(2*p, 8*p, 4*p, 4*p); // Тело
+        g.fillRect(1*p, 8*p, 1*p, 4*p); // Левая рука
+        g.fillRect(6*p, 8*p, 1*p, 4*p); // Правая рука
 
-    // 2. ВРАГИ
-    // Зомби (красный)
-    g.fillStyle(0xff0044, 1); g.fillCircle(16, 16, 14); 
-    g.fillStyle(0x000000, 1); g.fillCircle(12, 12, 4); g.fillCircle(20, 12, 4);
-    g.generateTexture('enemy_zombie', 32, 32); g.clear();
-    
-    // Летун (фиолетовый треугольник)
-    g.fillStyle(0x9900ff, 1); g.fillTriangle(16, 0, 32, 32, 0, 32); 
-    g.generateTexture('enemy_flyer', 32, 32); g.clear();
-    
-    // Танк (оранжевый квадрат)
-    g.fillStyle(0xff8800, 1); g.fillRect(4, 4, 24, 24); 
-    g.fillStyle(0x000000, 1); g.fillRect(10, 10, 12, 12); 
-    g.generateTexture('enemy_tank', 32, 32); g.clear();
+        // 2. Ноги (в зависимости от кадра)
+        if (frame === 0) { // Стойка
+            g.fillRect(2*p, 12*p, 1*p, 2*p); 
+            g.fillRect(5*p, 12*p, 1*p, 2*p);
+        } else if (frame === 1) { // Левая вперед
+            g.fillRect(1*p, 12*p, 2*p, 2*p); 
+            g.fillRect(5*p, 12*p, 1*p, 2*p);
+        } else if (frame === 2) { // Правая вперед
+            g.fillRect(2*p, 12*p, 1*p, 2*p); 
+            g.fillRect(5*p, 12*p, 2*p, 2*p);
+        } else if (frame === 3) { // Промежуточная
+            g.fillRect(2*p, 12*p, 1*p, 2*p); 
+            g.fillRect(5*p, 12*p, 1*p, 2*p);
+        }
 
-    // 3. БОСС (Огромный фиолетовый)
-    g.fillStyle(0x8800ff, 1); g.fillCircle(64, 64, 60); 
-    g.fillStyle(0xff0000, 1); g.fillCircle(40, 40, 15); g.fillCircle(88, 40, 15); g.fillCircle(64, 80, 20); 
-    g.generateTexture('enemy_boss', 128, 128); g.clear();
+        // 3. Визор (Темно-синий)
+        g.fillStyle(0x1a1a3a, 1);
+        g.fillRect(2*p, 4*p, 4*p, 4*p);
+        // 4. Блик на визоре (Светло-фиолетовый)
+        g.fillStyle(0xccccff, 1);
+        g.fillRect(2*p, 4*p, 2*p, 2*p);
+        // 5. Кнопки на груди
+        g.fillStyle(0xff0000, 1); g.fillRect(2*p, 9*p, 1*p, 1*p);
+        g.fillStyle(0x00ffff, 1); g.fillRect(3*p, 9*p, 1*p, 1*p);
 
-    // 4. ПУЛИ
-    g.fillStyle(0x00ffff, 1); g.fillRect(0, 0, 12, 4); g.generateTexture('bullet_pistol', 12, 4); g.clear();
-    g.fillStyle(0xffaa00, 1); g.fillRect(0, 0, 8, 4); g.generateTexture('bullet_shotgun', 8, 4); g.clear();
-    g.fillStyle(0xff00ff, 1); g.fillRect(0, 0, 18, 3); g.generateTexture('bullet_rifle', 18, 3); g.clear();
-    g.fillStyle(0xff0000, 1); g.fillCircle(6, 6, 6); g.generateTexture('bullet_rpg', 12, 12); g.clear();
+        g.generateTexture('player_' + frame, 8*p, 16*p);
+    }
 
-    // 5. ОПЫТ И МОНЕТЫ
-    g.fillStyle(0x00ffaa, 1); g.fillTriangle(10, 0, 20, 10, 10, 20); g.fillTriangle(10, 0, 0, 10, 10, 20); g.generateTexture('xp_gem', 20, 20); g.clear();
-    g.fillStyle(0xffcc00, 1); g.fillCircle(10, 10, 10); g.lineStyle(2, 0xffffff, 1); g.strokeCircle(10, 10, 6); g.generateTexture('coin', 20, 20); g.clear();
+    // Создаем 4 кадра
+    drawAstronaut(0); // Стойка
+    drawAstronaut(1); // Левая нога
+    drawAstronaut(2); // Правая нога
+    drawAstronaut(3); // Переходная (можно использовать как дубль стойки)
 
-    // 6. ПРЕПЯТСТВИЯ (Астероиды)
-    g.fillStyle(0x333333, 1); g.fillCircle(24, 24, 22); 
-    g.fillStyle(0x222222, 1); g.fillCircle(15, 15, 6); g.fillCircle(30, 25, 8);
-    g.generateTexture('crater', 48, 48); g.clear();
+    // === 2. ПРИШЕЛЬЦЫ (Разные цвета, 2 кадра для парения) ===
+    function drawAlien(color, frame) {
+        g.clear();
+        g.fillStyle(color, 1);
+        let offsetY = frame === 1 ? 1*p : 0; // Смещение для анимации
+        g.fillRect(1*p, (2*p)+offsetY, 6*p, 4*p); // Голова
+        g.fillRect(2*p, (6*p)+offsetY, 4*p, 2*p); // Тело
+        g.fillRect(1*p, (2*p)+offsetY, 1*p, 1*p); // Антенна
+        g.fillRect(6*p, (2*p)+offsetY, 1*p, 1*p); // Антенна
+        g.fillRect(0*p, (3*p)+offsetY, 1*p, 2*p); // Рука
+        g.fillRect(7*p, (3*p)+offsetY, 1*p, 2*p); // Рука
+        g.fillRect(2*p, (8*p)+offsetY, 1*p, 1*p); // Нога
+        g.fillRect(5*p, (8*p)+offsetY, 1*p, 1*p); // Нога
+        // Глаза
+        g.fillStyle(0x000000, 1);
+        g.fillRect(2*p, (3*p)+offsetY, 1*p, 2*p);
+        g.fillRect(5*p, (3*p)+offsetY, 1*p, 2*p);
+    }
 
-    // 7. СПУТНИК
-    g.fillStyle(0xaaaaaa, 1); g.fillRect(6, 6, 12, 12); // Тело
-    g.fillStyle(0x00ffff, 1); g.fillRect(0, 10, 4, 4); g.fillRect(20, 10, 4, 4); // Панели
-    g.generateTexture('satellite', 24, 24); g.clear();
+    drawAlien(0xff8800, 0); g.generateTexture('enemy_zombie_0', 8*p, 12*p);
+    drawAlien(0xff8800, 1); g.generateTexture('enemy_zombie_1', 8*p, 12*p);
+    drawAlien(0x00ffff, 0); g.generateTexture('enemy_flyer_0', 8*p, 12*p);
+    drawAlien(0x00ffff, 1); g.generateTexture('enemy_flyer_1', 8*p, 12*p);
+    drawAlien(0x00ff44, 0); g.generateTexture('enemy_tank_0', 8*p, 12*p);
+    drawAlien(0x00ff44, 1); g.generateTexture('enemy_tank_1', 8*p, 12*p);
 
-    // 8. СЕРДЕЧКО
-    g.fillStyle(0xff0000, 1); g.fillCircle(7, 7, 7); g.fillCircle(17, 7, 7); g.fillTriangle(0, 10, 24, 10, 12, 24); 
-    g.fillStyle(0xff8888, 1); g.fillCircle(5, 5, 3); // Блик
-    g.generateTexture('heart', 24, 24); g.clear();
-
-    // 9. ЧАСТИЦЫ
-    g.fillStyle(0xffffff, 1); g.fillCircle(3, 3, 3); g.generateTexture('particle_white', 6, 6); g.clear();
-    g.fillStyle(0xff0000, 1); g.fillCircle(3, 3, 3); g.generateTexture('particle_red', 6, 6); g.clear();
-
-    // 10. МАГАЗИН
-    g.fillStyle(0x222222, 1); g.fillRect(0, 0, 64, 64); g.fillStyle(0x00ff00, 1); g.fillRect(4, 4, 56, 16); g.generateTexture('shop', 64, 64); g.clear();
-
-    // 11. ФОН
-    g.fillStyle(0x050510, 1); g.fillRect(0, 0, 800, 600);
+    // === 3. ОСТАЛЬНОЕ ===
+    g.clear(); g.fillStyle(0x00ffff, 1); g.fillRect(0, 0, 12, 4); g.generateTexture('bullet_pistol', 12, 4);
+    g.clear(); g.fillStyle(0xffaa00, 1); g.fillRect(0, 0, 8, 4); g.generateTexture('bullet_shotgun', 8, 4);
+    g.clear(); g.fillStyle(0xff00ff, 1); g.fillRect(0, 0, 18, 3); g.generateTexture('bullet_rifle', 18, 3);
+    g.clear(); g.fillStyle(0xff0000, 1); g.fillRect(0, 0, 12, 6); g.fillStyle(0xffffff, 1); g.fillRect(0, 0, 4, 6); g.generateTexture('bullet_rpg', 12, 6);
+    g.clear(); g.fillStyle(0x00ffaa, 1); g.fillTriangle(10, 0, 20, 10, 10, 20); g.fillTriangle(10, 0, 0, 10, 10, 20); g.generateTexture('xp_gem', 20, 20);
+    g.clear(); g.fillStyle(0xffcc00, 1); g.fillCircle(10, 10, 10); g.lineStyle(2, 0xffffff, 1); g.strokeCircle(10, 10, 6); g.generateTexture('coin', 20, 20);
+    g.clear(); g.fillStyle(0xff0000, 1); g.fillCircle(7, 7, 7); g.fillCircle(17, 7, 7); g.fillTriangle(0, 10, 24, 10, 12, 24); g.fillStyle(0xff8888, 1); g.fillCircle(5, 5, 3); g.generateTexture('heart', 24, 24);
+    g.clear(); g.fillStyle(0x333333, 1); g.fillCircle(24, 24, 22); g.fillStyle(0x222222, 1); g.fillCircle(15, 15, 6); g.fillCircle(30, 25, 8); g.generateTexture('crater', 48, 48);
+    g.clear(); g.fillStyle(0xaaaaaa, 1); g.fillRect(6, 6, 12, 12); g.fillStyle(0x00ffff, 1); g.fillRect(0, 10, 4, 4); g.fillRect(20, 10, 4, 4); g.generateTexture('satellite', 24, 24);
+    g.clear(); g.fillStyle(0x222222, 1); g.fillRect(0, 0, 64, 64); g.fillStyle(0x00ff00, 1); g.fillRect(4, 4, 56, 16); g.generateTexture('shop', 64, 64);
+    g.clear(); g.fillStyle(0xffffff, 1); g.fillCircle(3, 3, 3); g.generateTexture('particle_white', 6, 6);
+    g.clear(); g.fillStyle(0xff0000, 1); g.fillCircle(3, 3, 3); g.generateTexture('particle_red', 6, 6);
+    g.clear(); g.fillStyle(0x050510, 1); g.fillRect(0, 0, 800, 600);
     for(let i=0; i<150; i++) { g.fillStyle(0xffffff, Phaser.Math.FloatBetween(0.1, 0.6)); g.fillCircle(Phaser.Math.Between(0, 800), Phaser.Math.Between(0, 600), Phaser.Math.Between(1, 2)); }
     g.generateTexture('bg_tile', 800, 600); g.destroy();
+
+    // === СОЗДАНИЕ АНИМАЦИЙ ===
+    // Анимация бега (4 кадра)
+    this.anims.create({
+        key: 'player_walk',
+        frames: [
+            { key: 'player_0' }, { key: 'player_1' }, 
+            { key: 'player_3' }, { key: 'player_2' }
+        ],
+        frameRate: 10, // Скорость анимации
+        repeat: -1
+    });
+
+    // Анимации парения врагов
+    this.anims.create({ key: 'zombie_float', frames: [{ key: 'enemy_zombie_0' }, { key: 'enemy_zombie_1' }], frameRate: 4, repeat: -1 });
+    this.anims.create({ key: 'flyer_float', frames: [{ key: 'enemy_flyer_0' }, { key: 'enemy_flyer_1' }], frameRate: 6, repeat: -1 });
+    this.anims.create({ key: 'tank_float', frames: [{ key: 'enemy_tank_0' }, { key: 'enemy_tank_1' }], frameRate: 3, repeat: -1 });
 
     this.scene.start('MenuScene');
 };
@@ -92,15 +134,14 @@ function MenuScene() { Phaser.Scene.call(this, { key: 'MenuScene' }); }
 MenuScene.prototype = Object.create(Phaser.Scene.prototype);
 MenuScene.prototype.constructor = MenuScene;
 MenuScene.prototype.create = function() {
-    this.add.tileSprite(0, 0, 800, 600, 'bg_tile').setOrigin(0); // Фон
-    this.add.image(400, 200, 'player').setScale(3); // Космонавт по центру
+    this.add.tileSprite(0, 0, 800, 600, 'bg_tile').setOrigin(0); 
+    this.add.sprite(400, 200, 'player_0').setScale(4); // Космонавт в меню
 
     this.add.text(400, 100, 'КОСМИЧЕСКИЙ ВЫЖИВШИЙ', { ...pixelFont, fontSize: '28px', fill: '#00ffff', stroke: '#000', strokeThickness: 6 }).setOrigin(0.5);
     this.add.text(400, 350, 'РЕКОРД: ' + Math.floor(bestTime / 1000) + ' СЕК', { ...pixelFont, fill: '#ffff00' }).setOrigin(0.5);
 
     let playBtn = this.add.rectangle(400, 450, 300, 60, 0x113355).setStrokeStyle(3, 0x00ffff).setInteractive();
     this.add.text(400, 450, 'ИГРАТЬ', { ...pixelFont, fontSize: '20px' }).setOrigin(0.5);
-    
     playBtn.on('pointerover', () => playBtn.setFillStyle(0x225588));
     playBtn.on('pointerout', () => playBtn.setFillStyle(0x113355));
     playBtn.on('pointerdown', () => this.scene.start('GameScene'));
@@ -146,7 +187,6 @@ GameScene.prototype.create = function() {
     this.physics.world.setBounds(-2500, -2500, 5000, 5000);
     this.cameras.main.setBounds(-2500, -2500, 5000, 5000);
 
-    // Кратеры (астероиды)
     craters = this.physics.add.staticGroup();
     for(let i = 0; i < 30; i++) {
         let cx = Phaser.Math.Between(-2000, 2000); let cy = Phaser.Math.Between(-2000, 2000);
@@ -157,16 +197,16 @@ GameScene.prototype.create = function() {
         }
     }
 
-    // Магазины
     shops = this.physics.add.staticGroup();
     for(let i=0; i<3; i++) {
         let sx = Phaser.Math.Between(-1500, 1500); let sy = Phaser.Math.Between(-1500, 1500);
         if(Phaser.Math.Distance.Between(0,0,sx,sy) > 500) { let shop = shops.create(sx, sy, 'shop'); shop.setData('isOpen', false); }
     }
 
-    player = this.physics.add.sprite(0, 0, 'player');
+    player = this.physics.add.sprite(0, 0, 'player_0');
     player.setCollideWorldBounds(true); 
     player.body.setCircle(12, 4, 4); 
+    player.play('player_walk'); // Включаем анимацию сразу
     this.cameras.main.startFollow(player, true, 0.1, 0.1);
 
     bullets = this.physics.add.group(); enemies = this.physics.add.group(); xpOrbs = this.physics.add.group(); coins = this.physics.add.group();
@@ -242,7 +282,17 @@ GameScene.prototype.update = function(time, delta) {
     let vx = (cursors.left.isDown || keys.A.isDown) ? -1 : (cursors.right.isDown || keys.D.isDown) ? 1 : 0;
     let vy = (cursors.up.isDown || keys.W.isDown) ? -1 : (cursors.down.isDown || keys.S.isDown) ? 1 : 0;
     if (joystick.active) { let a = Phaser.Math.Angle.Between(joystick.startX, joystick.startY, joystick.curX, joystick.curY); vx = Math.cos(a); vy = Math.sin(a); }
-    let len = Math.sqrt(vx*vx + vy*vy); player.setVelocity(len > 0 ? (vx/len)*moveSpeed : 0, len > 0 ? (vy/len)*moveSpeed : 0);
+    let len = Math.sqrt(vx*vx + vy*vy); 
+    
+    if (len > 0) {
+        player.setVelocity((vx/len)*moveSpeed, (vy/len)*moveSpeed);
+        player.setFlipX(vx < 0); 
+        if (!player.anims.isPlaying) player.play('player_walk');
+    } else {
+        player.setVelocity(0);
+        player.anims.stop();
+        player.setTexture('player_0'); // Стойка
+    }
 
     if (time > lastFired && !isReloading && currentAmmo > 0) { 
         let success = shoot(this); 
@@ -276,8 +326,13 @@ GameScene.prototype.update = function(time, delta) {
         bossHpBar.width = (currentBoss.hp / currentBoss.maxHp) * 400; bossHpBar.setVisible(true);
     } else { bossHpBar.setVisible(false); }
 
-    // ПРИТЯЖЕНИЕ ОПЫТА И МОНЕТ
-    enemies.getChildren().forEach(e => { if (e.active) this.physics.moveToObject(e, player, e.speed); });
+    enemies.getChildren().forEach(e => { 
+        if (e.active) {
+            this.physics.moveToObject(e, player, e.speed); 
+            e.setFlipX(e.x > player.x); 
+            if (!e.anims.isPlaying && e.anims.exists(e.animKey)) e.play(e.animKey);
+        } 
+    });
     xpOrbs.getChildren().forEach(xp => { 
         let dist = Phaser.Math.Distance.Between(player.x, player.y, xp.x, xp.y);
         if (dist < pickupRadius) this.physics.moveToObject(xp, player, 400); 
@@ -322,17 +377,18 @@ function getNearestEnemy(scene, x, y) {
 }
 function spawnEnemy() {
     if (gameOver || isPaused || shopOpen) return;
-    let count = 1 + Math.floor(gameTime / 60000); // Сначала по 1, потом больше
+    let count = 1 + Math.floor(gameTime / 60000); 
     for(let i=0; i<count; i++) {
         let rand = Math.random();
-        let type = 'enemy_zombie'; let speed = 50; let hp = 1;
-        if (rand > 0.8 && gameTime > 15000) { type = 'enemy_flyer'; speed = 100; hp = 1; }
-        else if (rand > 0.6 && gameTime > 40000) { type = 'enemy_tank'; speed = 40; hp = 3; }
+        let type = 'enemy_zombie'; let speed = 50; let hp = 1; let anim = 'zombie_float';
+        if (rand > 0.8 && gameTime > 15000) { type = 'enemy_flyer'; speed = 100; hp = 1; anim = 'flyer_float'; }
+        else if (rand > 0.6 && gameTime > 40000) { type = 'enemy_tank'; speed = 40; hp = 3; anim = 'tank_float'; }
         
         let angle = Math.random() * Math.PI * 2;
         let dist = 600; 
-        let e = enemies.create(player.x + Math.cos(angle)*dist, player.y + Math.sin(angle)*dist, type);
-        e.speed = speed; e.hp = hp * (1 + gameTime/120000); e.maxHp = e.hp;
+        let e = enemies.create(player.x + Math.cos(angle)*dist, player.y + Math.sin(angle)*dist, type + '_0');
+        e.speed = speed; e.hp = hp * (1 + gameTime/120000); e.maxHp = e.hp; e.animKey = anim;
+        e.play(anim);
     }
 }
 function spawnBoss(scene) {
