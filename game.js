@@ -1,4 +1,3 @@
-// 1. Настройка игры
 const config = {
     type: Phaser.AUTO,
     width: 800,
@@ -35,6 +34,8 @@ MenuScene.prototype.create = function() {
         graphics.fillCircle(Phaser.Math.Between(0, 800), Phaser.Math.Between(0, 600), size);
     }
     graphics.generateTexture('menu_bg', 800, 600);
+    graphics.destroy(); // Уничтожаем, чтобы не мешал
+
     this.add.image(400, 300, 'menu_bg');
 
     this.add.text(400, 150, 'КОСМИЧЕСКИЙ ВЫЖИВШИЙ', { 
@@ -79,51 +80,87 @@ GameScene.prototype.create = function() {
     hasMeteor = false; hasDrone = false; satellites = [];
     enemyHpMultiplier = 1; spawnRate = 1500;
 
-    let graphics = this.make.graphics({x: 0, y: 0, add: false});
+    // --- БЕЗОПАСНАЯ ГЕНЕРАЦИЯ ТЕКСТУР ---
     
     // Игрок
-    graphics.fillStyle(0xffffff, 1); graphics.fillRect(0, 0, 24, 24);
-    graphics.fillStyle(0x00aaff, 1); graphics.fillRect(16, 4, 8, 16);
-    graphics.generateTexture('player', 24, 24);
-    
-    // Враги
-    graphics.fillStyle(0x00ff44, 1); graphics.fillCircle(15, 15, 15); 
-    graphics.generateTexture('enemy_slime', 30, 30);
-    graphics.fillStyle(0xaa00ff, 1); graphics.fillTriangle(15, 0, 30, 30, 0, 30); 
-    graphics.generateTexture('enemy_flyer', 30, 30);
-    graphics.fillStyle(0xff3300, 1); graphics.fillRect(0, 0, 40, 40); 
-    graphics.generateTexture('enemy_tank', 40, 40);
+    let g1 = this.make.graphics({x: 0, y: 0, add: false});
+    g1.fillStyle(0xffffff, 1); g1.fillRect(0, 0, 24, 24);
+    g1.fillStyle(0x00aaff, 1); g1.fillRect(16, 4, 8, 16);
+    g1.generateTexture('player', 24, 24);
+    g1.destroy();
 
-    // Пули, звезды, сердца, метеорит, кратер, спутник
-    graphics.fillStyle(0x00ffff, 1); graphics.fillRect(0, 0, 15, 4);
-    graphics.generateTexture('bullet', 15, 4);
-    graphics.fillStyle(0xffff00, 1); graphics.fillStar(10, 10, 5, 10, 5);
-    graphics.generateTexture('star', 20, 20);
-    graphics.fillStyle(0xff0000, 1); 
-    graphics.fillCircle(7, 7, 7); graphics.fillCircle(17, 7, 7); graphics.fillTriangle(0, 10, 24, 10, 12, 24);
-    graphics.generateTexture('heart', 24, 24);
-    graphics.fillStyle(0xff5500, 1); graphics.fillCircle(20, 20, 20);
-    graphics.generateTexture('meteor', 40, 40);
-    graphics.fillStyle(0x1a1a1a, 1); graphics.fillCircle(40, 40, 40);
-    graphics.lineStyle(4, 0x333333, 1); graphics.strokeCircle(40, 40, 40);
-    graphics.generateTexture('crater', 80, 80);
-    graphics.fillStyle(0x00ffff, 1); graphics.fillCircle(10, 10, 10);
-    graphics.generateTexture('satellite', 20, 20);
+    // Враг Слизень
+    let g2 = this.make.graphics({x: 0, y: 0, add: false});
+    g2.fillStyle(0x00ff44, 1); g2.fillCircle(15, 15, 15); 
+    g2.generateTexture('enemy_slime', 30, 30);
+    g2.destroy();
+
+    // Враг Летун
+    let g3 = this.make.graphics({x: 0, y: 0, add: false});
+    g3.fillStyle(0xaa00ff, 1); g3.fillTriangle(15, 0, 30, 30, 0, 30); 
+    g3.generateTexture('enemy_flyer', 30, 30);
+    g3.destroy();
+
+    // Враг Танк
+    let g4 = this.make.graphics({x: 0, y: 0, add: false});
+    g4.fillStyle(0xff3300, 1); g4.fillRect(0, 0, 40, 40); 
+    g4.generateTexture('enemy_tank', 40, 40);
+    g4.destroy();
+
+    // Пуля
+    let g5 = this.make.graphics({x: 0, y: 0, add: false});
+    g5.fillStyle(0x00ffff, 1); g5.fillRect(0, 0, 15, 4);
+    g5.generateTexture('bullet', 15, 4);
+    g5.destroy();
+
+    // Звезда
+    let g6 = this.make.graphics({x: 0, y: 0, add: false});
+    g6.fillStyle(0xffff00, 1); g6.fillStar(10, 10, 5, 10, 5);
+    g6.generateTexture('star', 20, 20);
+    g6.destroy();
+
+    // Сердце
+    let g7 = this.make.graphics({x: 0, y: 0, add: false});
+    g7.fillStyle(0xff0000, 1); 
+    g7.fillCircle(7, 7, 7); g7.fillCircle(17, 7, 7); g7.fillTriangle(0, 10, 24, 10, 12, 24);
+    g7.generateTexture('heart', 24, 24);
+    g7.destroy();
+
+    // Метеорит
+    let g8 = this.make.graphics({x: 0, y: 0, add: false});
+    g8.fillStyle(0xff5500, 1); g8.fillCircle(20, 20, 20);
+    g8.generateTexture('meteor', 40, 40);
+    g8.destroy();
+
+    // Кратер
+    let g9 = this.make.graphics({x: 0, y: 0, add: false});
+    g9.fillStyle(0x1a1a1a, 1); g9.fillCircle(40, 40, 40);
+    g9.lineStyle(4, 0x333333, 1); g9.strokeCircle(40, 40, 40);
+    g9.generateTexture('crater', 80, 80);
+    g9.destroy();
+
+    // Спутник
+    let g10 = this.make.graphics({x: 0, y: 0, add: false});
+    g10.fillStyle(0x00ffff, 1); g10.fillCircle(10, 10, 10);
+    g10.generateTexture('satellite', 20, 20);
+    g10.destroy();
 
     // Фон
-    graphics.fillStyle(0x000000, 1); graphics.fillRect(0, 0, 800, 600);
+    let g11 = this.make.graphics({x: 0, y: 0, add: false});
+    g11.fillStyle(0x000000, 1); g11.fillRect(0, 0, 800, 600);
     for (let i = 0; i < 150; i++) {
         let size = Phaser.Math.Between(1, 3);
-        graphics.fillStyle(0xffffff, Phaser.Math.FloatBetween(0.1, 0.8));
-        graphics.fillCircle(Phaser.Math.Between(0, 800), Phaser.Math.Between(0, 600), size);
+        g11.fillStyle(0xffffff, Phaser.Math.FloatBetween(0.1, 0.8));
+        g11.fillCircle(Phaser.Math.Between(0, 800), Phaser.Math.Between(0, 600), size);
     }
-    graphics.generateTexture('bg_tile', 800, 600);
+    g11.generateTexture('bg_tile', 800, 600);
+    g11.destroy();
 
+    // --- МИР ---
     this.add.tileSprite(-2500, -2500, 5000, 5000, 'bg_tile').setOrigin(0);
     this.physics.world.setBounds(-2500, -2500, 5000, 5000);
     this.cameras.main.setBounds(-2500, -2500, 5000, 5000);
 
-    // Кратеры
     craters = this.physics.add.staticGroup();
     for(let i = 0; i < 40; i++) {
         let cx = Phaser.Math.Between(-2000, 2000);
@@ -134,7 +171,6 @@ GameScene.prototype.create = function() {
         }
     }
 
-    // Игрок
     player = this.physics.add.sprite(0, 0, 'player');
     player.setCollideWorldBounds(true);
     this.cameras.main.startFollow(player, true, 0.1, 0.1);
