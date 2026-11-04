@@ -28,29 +28,20 @@ MenuScene.prototype = Object.create(Phaser.Scene.prototype);
 MenuScene.prototype.constructor = MenuScene;
 
 MenuScene.prototype.create = function() {
-    let graphics = this.make.graphics({x: 0, y: 0, add: false});
-    for (let i = 0; i < 150; i++) {
-        let size = Phaser.Math.Between(1, 3);
-        graphics.fillStyle(0xffffff, Phaser.Math.FloatBetween(0.1, 0.8));
-        graphics.fillCircle(Phaser.Math.Between(0, 800), Phaser.Math.Between(0, 600), size);
+    let g = this.make.graphics({x: 0, y: 0, add: false});
+    g.fillStyle(0x222222, 1); g.fillRect(0, 0, 800, 600);
+    for(let i=0; i<50; i++) {
+        g.fillStyle(0x1a1a1a, 0.5); g.fillCircle(Phaser.Math.Between(0, 800), Phaser.Math.Between(0, 600), Phaser.Math.Between(10, 50));
     }
-    graphics.generateTexture('menu_bg', 800, 600);
-    graphics.destroy();
-
+    g.generateTexture('menu_bg', 800, 600); g.destroy();
     this.add.image(400, 300, 'menu_bg');
 
-    this.add.text(400, 150, 'КОСМИЧЕСКИЙ ВЫЖИВШИЙ', { 
-        fontSize: '40px', fill: '#00ffff', fontFamily: 'Arial', fontWeight: 'bold'
-    }).setOrigin(0.5);
-
+    this.add.text(400, 150, 'КОСМИЧЕСКИЙ ВЫЖИВШИЙ', { fontSize: '40px', fill: '#00ffff', fontFamily: 'Arial', stroke: '#000', strokeThickness: 4 }).setOrigin(0.5);
+    
     let playBtn = this.add.rectangle(400, 400, 300, 80, 0x113355).setStrokeStyle(3, 0x00ffff).setInteractive();
     this.add.text(400, 400, 'ИГРАТЬ', { fontSize: '36px', fill: '#ffffff' }).setOrigin(0.5);
 
-    playBtn.on('pointerover', () => playBtn.setFillStyle(0x225588));
-    playBtn.on('pointerout', () => playBtn.setFillStyle(0x113355));
-    playBtn.on('pointerdown', () => {
-        this.scene.start('GameScene');
-    });
+    playBtn.on('pointerdown', () => this.scene.start('GameScene'));
 };
 
 // ==========================================
@@ -62,108 +53,105 @@ function GameScene() {
 GameScene.prototype = Object.create(Phaser.Scene.prototype);
 GameScene.prototype.constructor = GameScene;
 
-let player, bullets, enemies, xpOrbs, craters;
+// Глобальные переменные
+let player, bullets, enemies, xpOrbs, craters, coins, shops;
 let satellites = [], drone;
 let playerXp = 0, playerLevel = 1, xpToNextLevel = 100;
 let xpBar, levelText, hearts = [], playerHealth = 3;
+let playerCoins = 0, coinText;
 let isInvulnerable = false, gameOver = false, isPaused = false;
 let cursors, keys;
 let fireRate = 800, bulletDamage = 1, moveSpeed = 250, bulletCount = 1, pickupRadius = 100;
 let hasMeteor = false, hasDrone = false, droneFireRate = 1000;
 let lastFired = 0, lastDroneFired = 0, meteorTimer = 0;
 let gameTime = 0, timeText, difficultyTimer = 0, enemyHpMultiplier = 1, spawnRate = 1500, spawnTimer;
+let bossSpawnTimer = 0;
+
+// Оружие
+let currentWeapon = 'pistol'; // pistol, shotgun, rifle, rpg
+let ownedWeapons = { pistol: true, shotgun: false, rifle: false, rpg: false };
+let weaponStats = {
+    pistol: { fireRate: 800, bulletCount: 1, spread: 0, damage: 1, color: 0x00ffff, speed: 600 },
+    shotgun: { fireRate: 1200, bulletCount: 3, spread: 0.3, damage: 0.7, color: 0xffaa00, speed: 500 },
+    rifle: { fireRate: 150, bulletCount: 1, spread: 0.05, damage: 0.8, color: 0xff00ff, speed: 800 },
+    rpg: { fireRate: 2000, bulletCount: 1, spread: 0, damage: 3, color: 0xff0000, speed: 400 }
+};
+
+// Магазины
+let shopPhaseTimer = 0;
+let shopOpen = false;
+let shopUiContainer = null;
 let joystick = { active: false, startX: 0, startY: 0, curX: 0, curY: 0, base: null, thumb: null };
 
 GameScene.prototype.create = function() {
     gameOver = false; isPaused = false; playerHealth = 3; hearts = [];
-    playerXp = 0; playerLevel = 1; xpToNextLevel = 100; gameTime = 0;
-    fireRate = 800; bulletDamage = 1; moveSpeed = 250; bulletCount = 1; pickupRadius = 100;
+    playerXp = 0; playerLevel = 1; xpToNextLevel = 100; gameTime = 0; playerCoins = 0;
+    currentWeapon = 'pistol'; ownedWeapons = { pistol: true, shotgun: false, rifle: false, rpg: false };
+    fireRate = weaponStats.pistol.fireRate; bulletDamage = weaponStats.pistol.damage; bulletCount = weaponStats.pistol.bulletCount;
     hasMeteor = false; hasDrone = false; satellites = [];
-    enemyHpMultiplier = 1; spawnRate = 1500;
+    enemyHpMultiplier = 1; spawnRate = 1500; bossSpawnTimer = 0; shopPhaseTimer = 0; shopOpen = false;
 
-    // Безопасная генерация текстур
-    let g1 = this.make.graphics({x: 0, y: 0, add: false});
-    g1.fillStyle(0xffffff, 1); g1.fillRect(0, 0, 24, 24);
-    g1.fillStyle(0x00aaff, 1); g1.fillRect(16, 4, 8, 16);
-    g1.generateTexture('player', 24, 24);
-    g1.destroy();
+    // --- ГЕНЕРАЦИЯ ТЕКСТУР ---
+    let g = this.make.graphics({x: 0, y: 0, add: false});
+    
+    // Игрок
+    g.fillStyle(0xffffff, 1); g.fillRect(4, 0, 20, 24);
+    g.fillStyle(0x00aaff, 1); g.fillRect(16, 6, 8, 12);
+    g.fillStyle(0xaaaaaa, 1); g.fillRect(0, 4, 6, 16);
+    g.generateTexture('player', 24, 24); g.clear();
 
-    let g2 = this.make.graphics({x: 0, y: 0, add: false});
-    g2.fillStyle(0x00ff44, 1); g2.fillCircle(15, 15, 15); 
-    g2.generateTexture('enemy_slime', 30, 30);
-    g2.destroy();
+    // Враги
+    g.fillStyle(0x00ff44, 1); g.fillCircle(15, 15, 15); g.generateTexture('enemy_slime', 30, 30); g.clear();
+    g.fillStyle(0xaa00ff, 1); g.fillTriangle(15, 0, 30, 30, 0, 30); g.generateTexture('enemy_flyer', 30, 30); g.clear();
+    g.fillStyle(0xff3300, 1); g.fillRect(0, 0, 40, 40); g.generateTexture('enemy_tank', 40, 40); g.clear();
+    g.fillStyle(0x8800ff, 1); g.fillCircle(40, 40, 40); g.fillStyle(0xff0000, 1); g.fillCircle(40, 40, 15); g.generateTexture('enemy_boss', 80, 80); g.clear();
 
-    let g3 = this.make.graphics({x: 0, y: 0, add: false});
-    g3.fillStyle(0xaa00ff, 1); g3.fillTriangle(15, 0, 30, 30, 0, 30); 
-    g3.generateTexture('enemy_flyer', 30, 30);
-    g3.destroy();
+    // Пули
+    g.fillStyle(0x00ffff, 1); g.fillRect(0, 0, 15, 4); g.generateTexture('bullet', 15, 4); g.clear();
 
-    let g4 = this.make.graphics({x: 0, y: 0, add: false});
-    g4.fillStyle(0xff3300, 1); g4.fillRect(0, 0, 40, 40); 
-    g4.generateTexture('enemy_tank', 40, 40);
-    g4.destroy();
+    // Звезда опыта и Монета
+    g.fillStyle(0x00ffff, 1); g.beginPath(); g.moveTo(10, 0); g.lineTo(20, 10); g.lineTo(10, 20); g.lineTo(0, 10); g.closePath(); g.fillPath(); g.generateTexture('star', 20, 20); g.clear();
+    g.fillStyle(0xffff00, 1); g.fillCircle(10, 10, 10); g.fillStyle(0xffaa00, 1); g.fillCircle(10, 10, 7); g.generateTexture('coin', 20, 20); g.clear();
 
-    let g5 = this.make.graphics({x: 0, y: 0, add: false});
-    g5.fillStyle(0x00ffff, 1); g5.fillRect(0, 0, 15, 4);
-    g5.generateTexture('bullet', 15, 4);
-    g5.destroy();
+    // Сердце, Метеорит, Кратер, Спутник
+    g.fillStyle(0xff0000, 1); g.fillCircle(7, 7, 7); g.fillCircle(17, 7, 7); g.fillTriangle(0, 10, 24, 10, 12, 24); g.generateTexture('heart', 24, 24); g.clear();
+    g.fillStyle(0xff5500, 1); g.fillCircle(20, 20, 20); g.generateTexture('meteor', 40, 40); g.clear();
+    g.fillStyle(0x1a1a1a, 1); g.fillCircle(40, 40, 40); g.lineStyle(4, 0x333333, 1); g.strokeCircle(40, 40, 40); g.generateTexture('crater', 80, 80); g.clear();
+    g.fillStyle(0x00ffff, 1); g.fillCircle(10, 10, 10); g.generateTexture('satellite', 20, 20); g.clear();
 
-    // Звезда (ромб)
-    let g6 = this.make.graphics({x: 0, y: 0, add: false});
-    g6.fillStyle(0xffff00, 1); 
-    g6.beginPath();
-    g6.moveTo(10, 0);
-    g6.lineTo(20, 10);
-    g6.lineTo(10, 20);
-    g6.lineTo(0, 10);
-    g6.closePath();
-    g6.fillPath();
-    g6.generateTexture('star', 20, 20);
-    g6.destroy();
+    // Магазин (Закрытый и Открытый)
+    g.fillStyle(0x444444, 1); g.fillRect(0, 0, 60, 60); g.fillStyle(0x222222, 1); g.fillRect(5, 5, 50, 20); g.generateTexture('shop_closed', 60, 60); g.clear();
+    g.fillStyle(0x444444, 1); g.fillRect(0, 0, 60, 60); g.fillStyle(0x00ff00, 1); g.fillRect(5, 5, 50, 20); g.generateTexture('shop_open', 60, 60); g.clear();
 
-    let g7 = this.make.graphics({x: 0, y: 0, add: false});
-    g7.fillStyle(0xff0000, 1); 
-    g7.fillCircle(7, 7, 7); g7.fillCircle(17, 7, 7); g7.fillTriangle(0, 10, 24, 10, 12, 24);
-    g7.generateTexture('heart', 24, 24);
-    g7.destroy();
-
-    let g8 = this.make.graphics({x: 0, y: 0, add: false});
-    g8.fillStyle(0xff5500, 1); g8.fillCircle(20, 20, 20);
-    g8.generateTexture('meteor', 40, 40);
-    g8.destroy();
-
-    let g9 = this.make.graphics({x: 0, y: 0, add: false});
-    g9.fillStyle(0x1a1a1a, 1); g9.fillCircle(40, 40, 40);
-    g9.lineStyle(4, 0x333333, 1); g9.strokeCircle(40, 40, 40);
-    g9.generateTexture('crater', 80, 80);
-    g9.destroy();
-
-    let g10 = this.make.graphics({x: 0, y: 0, add: false});
-    g10.fillStyle(0x00ffff, 1); g10.fillCircle(10, 10, 10);
-    g10.generateTexture('satellite', 20, 20);
-    g10.destroy();
-
-    let g11 = this.make.graphics({x: 0, y: 0, add: false});
-    g11.fillStyle(0x000000, 1); g11.fillRect(0, 0, 800, 600);
-    for (let i = 0; i < 150; i++) {
-        let size = Phaser.Math.Between(1, 3);
-        g11.fillStyle(0xffffff, Phaser.Math.FloatBetween(0.1, 0.8));
-        g11.fillCircle(Phaser.Math.Between(0, 800), Phaser.Math.Between(0, 600), size);
+    // Фон
+    g.fillStyle(0x333333, 1); g.fillRect(0, 0, 800, 600);
+    for (let i = 0; i < 100; i++) {
+        g.fillStyle(0x222222, Phaser.Math.FloatBetween(0.1, 0.5));
+        g.fillCircle(Phaser.Math.Between(0, 800), Phaser.Math.Between(0, 600), Phaser.Math.Between(5, 30));
     }
-    g11.generateTexture('bg_tile', 800, 600);
-    g11.destroy();
+    g.generateTexture('bg_tile', 800, 600); g.destroy();
 
+    // --- МИР ---
     this.add.tileSprite(-2500, -2500, 5000, 5000, 'bg_tile').setOrigin(0);
     this.physics.world.setBounds(-2500, -2500, 5000, 5000);
     this.cameras.main.setBounds(-2500, -2500, 5000, 5000);
 
+    // Кратеры
     craters = this.physics.add.staticGroup();
     for(let i = 0; i < 40; i++) {
-        let cx = Phaser.Math.Between(-2000, 2000);
-        let cy = Phaser.Math.Between(-2000, 2000);
+        let cx = Phaser.Math.Between(-2000, 2000); let cy = Phaser.Math.Between(-2000, 2000);
         if (Phaser.Math.Distance.Between(0, 0, cx, cy) > 300) {
-            let crater = craters.create(cx, cy, 'crater');
-            crater.body.setCircle(35, 5, 5); 
+            let crater = craters.create(cx, cy, 'crater'); crater.body.setCircle(35, 5, 5); 
+        }
+    }
+
+    // Магазины (5 штук)
+    shops = this.physics.add.staticGroup();
+    for(let i=0; i<5; i++) {
+        let sx = Phaser.Math.Between(-2000, 2000); let sy = Phaser.Math.Between(-2000, 2000);
+        if(Phaser.Math.Distance.Between(0,0,sx,sy) > 500) {
+            let shop = shops.create(sx, sy, 'shop_closed');
+            shop.setData('isOpen', false);
         }
     }
 
@@ -174,13 +162,16 @@ GameScene.prototype.create = function() {
     bullets = this.physics.add.group();
     enemies = this.physics.add.group();
     xpOrbs = this.physics.add.group();
+    coins = this.physics.add.group();
 
+    // UI
     let uiContainer = this.add.container(0, 0).setScrollFactor(0).setDepth(100);
     let uiBg = this.add.rectangle(400, 20, 800, 40, 0x000000).setOrigin(0.5).setAlpha(0.7);
-    xpBar = this.add.rectangle(0, 20, 0, 20, 0xffff00).setOrigin(0, 0.5);
+    xpBar = this.add.rectangle(0, 20, 0, 20, 0x00ffff).setOrigin(0, 0.5);
     levelText = this.add.text(10, 10, 'LVL: 1', { fontSize: '18px', fill: '#fff' });
     timeText = this.add.text(680, 10, '00:00', { fontSize: '18px', fill: '#fff' });
-    uiContainer.add([uiBg, xpBar, levelText, timeText]);
+    coinText = this.add.text(680, 60, '🪙: 0', { fontSize: '24px', fill: '#ffff00' });
+    uiContainer.add([uiBg, xpBar, levelText, timeText, coinText]);
 
     for (let i = 0; i < 3; i++) {
         let h = this.add.image(30 + i * 30, 60, 'heart').setScrollFactor(0).setDepth(100);
@@ -190,10 +181,10 @@ GameScene.prototype.create = function() {
     cursors = this.input.keyboard.createCursorKeys();
     keys = this.input.keyboard.addKeys('W,A,S,D');
 
+    // Джойстик
     this.input.on('pointerdown', (pointer) => {
         if (pointer.x < 400 && !isPaused && !gameOver) {
-            joystick.active = true;
-            joystick.startX = pointer.x; joystick.startY = pointer.y;
+            joystick.active = true; joystick.startX = pointer.x; joystick.startY = pointer.y;
             joystick.base = this.add.circle(pointer.x, pointer.y, 40, 0xffffff, 0.2).setScrollFactor(0).setDepth(100);
             joystick.thumb = this.add.circle(pointer.x, pointer.y, 20, 0xffffff, 0.5).setScrollFactor(0).setDepth(100);
         }
@@ -214,11 +205,14 @@ GameScene.prototype.create = function() {
         if (joystick.thumb) joystick.thumb.destroy();
     });
 
+    // Коллизии
     this.physics.add.overlap(bullets, enemies, hitEnemy, null, this);
     this.physics.add.overlap(player, enemies, playerHit, null, this);
     this.physics.add.overlap(player, xpOrbs, collectXp, null, this);
+    this.physics.add.overlap(player, coins, collectCoin, null, this);
     this.physics.add.collider(player, craters);
     this.physics.add.collider(enemies, craters);
+    this.physics.add.collider(player, shops, openShop, null, this);
 
     spawnTimer = this.time.addEvent({ delay: spawnRate, callback: spawnEnemy, callbackScope: this, loop: true });
 };
@@ -229,14 +223,39 @@ GameScene.prototype.update = function(time, delta) {
     gameTime += delta;
     timeText.setText(Math.floor(gameTime / 60000).toString().padStart(2, '0') + ':' + Math.floor((gameTime % 60000) / 1000).toString().padStart(2, '0'));
     
+    // Таймер магазина
+    shopPhaseTimer += delta;
+    if (shopPhaseTimer > 150000) { // 2.5 минуты
+        shopOpen = true;
+        shopPhaseTimer = -30000; // 30 секунд открыто
+        shops.getChildren().forEach(shop => {
+            shop.setTexture('shop_open');
+            shop.setData('isOpen', true);
+        });
+    } else if (shopOpen && shopPhaseTimer > 0) {
+        shopOpen = false;
+        shops.getChildren().forEach(shop => {
+            shop.setTexture('shop_closed');
+            shop.setData('isOpen', false);
+        });
+    }
+
     difficultyTimer += delta;
     if (difficultyTimer > 30000) {
         difficultyTimer = 0;
         enemyHpMultiplier += 0.2;
         spawnRate = Math.max(300, spawnRate - 100); 
-        spawnTimer.delay = spawnRate;
+        if(!shopOpen) spawnTimer.delay = spawnRate;
     }
 
+    // Босс раз в 5 минут
+    bossSpawnTimer += delta;
+    if (bossSpawnTimer > 300000) {
+        bossSpawnTimer = 0;
+        spawnBoss(this);
+    }
+
+    // Движение
     let vx = 0, vy = 0;
     if (cursors.left.isDown || keys.A.isDown) vx = -1;
     if (cursors.right.isDown || keys.D.isDown) vx = 1;
@@ -247,33 +266,26 @@ GameScene.prototype.update = function(time, delta) {
         let angle = Phaser.Math.Angle.Between(joystick.startX, joystick.startY, joystick.curX, joystick.curY);
         vx = Math.cos(angle); vy = Math.sin(angle);
     }
-
     let length = Math.sqrt(vx * vx + vy * vy);
-    if (length > 0) {
-        player.setVelocity((vx / length) * moveSpeed, (vy / length) * moveSpeed);
-    } else {
-        player.setVelocity(0);
-    }
+    player.setVelocity((length > 0) ? (vx / length) * moveSpeed : 0, (length > 0) ? (vy / length) * moveSpeed : 0);
 
+    // Стрельба
     if (time > lastFired) {
         shoot(this);
-        lastFired = time + fireRate;
+        lastFired = time + weaponStats[currentWeapon].fireRate;
     }
 
+    // Дрон
     if (hasDrone) {
         if (!drone) drone = this.add.circle(0, 0, 10, 0x00ffff);
         drone.setVisible(true);
         let droneAngle = time / 500;
         drone.x = player.x + Math.cos(droneAngle) * 50;
         drone.y = player.y + Math.sin(droneAngle) * 50;
-        if (time > lastDroneFired) { 
-            shootFrom(this, drone.x, drone.y);
-            lastDroneFired = time + droneFireRate;
-        }
-    } else if (drone) {
-        drone.setVisible(false);
-    }
+        if (time > lastDroneFired) { shootFrom(this, drone.x, drone.y); lastDroneFired = time + droneFireRate; }
+    } else if (drone) { drone.setVisible(false); }
 
+    // Спутники
     satellites.forEach((sat, index) => {
         let angle = (time / 1000) + (index * (Math.PI * 2 / satellites.length));
         sat.x = player.x + Math.cos(angle) * 70;
@@ -281,38 +293,28 @@ GameScene.prototype.update = function(time, delta) {
         enemies.getChildren().forEach(enemy => {
             if (Phaser.Math.Distance.Between(sat.x, sat.y, enemy.x, enemy.y) < 30) {
                 if (!enemy.lastSatHit || time > enemy.lastSatHit + 1000) {
-                    enemy.lastSatHit = time;
-                    enemy.hp -= 1; 
-                    enemy.setTint(0xffffff);
-                    this.time.delayedCall(100, () => { if(enemy.active) enemy.clearTint(); });
-                    if (enemy.hp <= 0) {
-                        enemy.destroy();
-                        let xp = xpOrbs.create(enemy.x, enemy.y, 'star');
-                        this.physics.moveToObject(xp, player, 100);
-                    }
+                    enemy.lastSatHit = time; enemy.hp -= 1; 
+                    enemy.setTint(0xffffff); this.time.delayedCall(100, () => { if(enemy.active) enemy.clearTint(); });
+                    if (enemy.hp <= 0) killEnemy(this, enemy);
                 }
             }
         });
     });
 
+    // Метеорит
     if (hasMeteor) {
         meteorTimer += delta;
-        if (meteorTimer > 3000) {
-            meteorTimer = 0;
-            castMeteor(this);
-        }
+        if (meteorTimer > 5000) { meteorTimer = 0; castMeteor(this); }
     }
 
+    // Враги
     enemies.getChildren().forEach(enemy => {
-        if (enemy.active) {
-            this.physics.moveToObject(enemy, player, enemy.speed);
-        }
+        if (enemy.active) this.physics.moveToObject(enemy, player, enemy.speed);
     });
 
+    // Сбор опыта
     xpOrbs.getChildren().forEach(xp => {
-        if (Phaser.Math.Distance.Between(player.x, player.y, xp.x, xp.y) < pickupRadius) {
-            this.physics.moveToObject(xp, player, 200);
-        }
+        if (Phaser.Math.Distance.Between(player.x, player.y, xp.x, xp.y) < pickupRadius) this.physics.moveToObject(xp, player, 200);
     });
 };
 
@@ -320,12 +322,16 @@ function shoot(scene) {
     let target = getNearestEnemy(scene, player.x, player.y);
     if (!target) return;
     let angle = Phaser.Math.Angle.Between(player.x, player.y, target.x, target.y);
-    for (let i = 0; i < bulletCount; i++) {
-        let offset = (i - (bulletCount - 1) / 2) * 0.2; 
+    let stats = weaponStats[currentWeapon];
+    let actualBulletCount = stats.bulletCount + (bulletCount - 1); // Карточка доп пули добавляет пули
+    
+    for (let i = 0; i < actualBulletCount; i++) {
+        let offset = (i - (actualBulletCount - 1) / 2) * (stats.spread > 0 ? stats.spread : 0.1); 
         let bullet = bullets.create(player.x, player.y, 'bullet');
+        bullet.setTint(stats.color);
         bullet.rotation = angle + offset;
-        bullet.damage = bulletDamage;
-        scene.physics.velocityFromRotation(angle + offset, 600, bullet.body.velocity);
+        bullet.damage = stats.damage * bulletDamage;
+        scene.physics.velocityFromRotation(angle + offset, stats.speed, bullet.body.velocity);
     }
 }
 
@@ -349,7 +355,7 @@ function getNearestEnemy(scene, x, y) {
 }
 
 function spawnEnemy() {
-    if (gameOver || isPaused) return;
+    if (gameOver || isPaused || shopOpen) return; // Не спавним при открытом магазине
     let type = 'enemy_slime'; let speed = 80; let hp = 1;
     let rand = Math.random();
     if (rand > 0.7 && gameTime > 20000) { type = 'enemy_flyer'; speed = 150; hp = 1; }
@@ -362,35 +368,56 @@ function spawnEnemy() {
     let enemy = enemies.create(x, y, type);
     enemy.speed = speed;
     enemy.hp = Math.floor(hp * enemyHpMultiplier);
-    enemy.maxHp = enemy.hp;
+}
+
+function spawnBoss(scene) {
+    let cam = scene.cameras.main;
+    let x = Phaser.Math.Between(cam.worldView.x - 200, cam.worldView.right + 200);
+    let y = Phaser.Math.Between(cam.worldView.y - 200, cam.worldView.bottom + 200);
+    let boss = enemies.create(x, y, 'enemy_boss');
+    boss.speed = 40; boss.hp = 50; boss.isBoss = true;
 }
 
 function hitEnemy(bullet, enemy) {
     bullet.destroy();
     enemy.hp -= bullet.damage;
-    enemy.setTint(0xffffff);
-    this.time.delayedCall(100, () => { if(enemy.active) enemy.clearTint(); });
+    enemy.setTint(0xffffff); this.time.delayedCall(100, () => { if(enemy.active) enemy.clearTint(); });
+    if (enemy.hp <= 0) killEnemy(this, enemy);
+}
 
-    if (enemy.hp <= 0) {
-        enemy.destroy();
-        let xp = xpOrbs.create(enemy.x, enemy.y, 'star');
-        xp.setVelocity(Phaser.Math.Between(-50, 50), Phaser.Math.Between(-50, 50));
+function killEnemy(scene, enemy) {
+    enemy.destroy();
+    let xp = xpOrbs.create(enemy.x, enemy.y, 'star');
+    xp.setVelocity(Phaser.Math.Between(-50, 50), Phaser.Math.Between(-50, 50));
+    
+    // Шанс 25% на монету
+    if (Math.random() < 0.25) {
+        let coin = coins.create(enemy.x, enemy.y, 'coin');
+        coin.setVelocity(Phaser.Math.Between(-50, 50), Phaser.Math.Between(-50, 50));
+    }
+    if (enemy.isBoss) {
+        for(let i=0; i<10; i++){
+            let extraXp = xpOrbs.create(enemy.x, enemy.y, 'star');
+            extraXp.setVelocity(Phaser.Math.Between(-100, 100), Phaser.Math.Between(-100, 100));
+            if(i < 5) { let c = coins.create(enemy.x, enemy.y, 'coin'); c.setVelocity(Phaser.Math.Between(-100, 100), Phaser.Math.Between(-100, 100)); }
+        }
     }
 }
 
 function collectXp(player, xp) {
-    xp.destroy();
-    playerXp += 15;
+    xp.destroy(); playerXp += 15;
     xpBar.width = (playerXp / xpToNextLevel) * 800;
-    if (playerXp >= xpToNextLevel) {
-        levelUp.call(this);
-    }
+    if (playerXp >= xpToNextLevel) levelUp.call(this);
+}
+
+function collectCoin(player, coin) {
+    coin.destroy(); playerCoins += 1;
+    coinText.setText('🪙: ' + playerCoins);
 }
 
 function playerHit(player, enemy) {
     if (gameOver || isInvulnerable) return;
-    playerHealth--;
-    hearts[playerHealth].setTint(0x000000); 
+    playerHealth--; hearts[playerHealth].setTint(0x000000); 
     isInvulnerable = true;
     
     let angle = Phaser.Math.Angle.Between(enemy.x, enemy.y, player.x, player.y);
@@ -398,20 +425,74 @@ function playerHit(player, enemy) {
     this.tweens.add({ targets: player, alpha: 0.2, duration: 100, yoyo: true, repeat: 5 });
     
     if (playerHealth <= 0) {
-        gameOver = true;
-        this.physics.pause();
-        player.setTint(0xff0000);
+        gameOver = true; this.physics.pause(); player.setTint(0xff0000);
         this.add.text(400, 300, 'ИГРА ОКОНЧЕНА', { fontSize: '60px', fill: '#ff0000' }).setOrigin(0.5).setScrollFactor(0).setDepth(200);
     } else {
         this.time.delayedCall(1500, () => { isInvulnerable = false; player.alpha = 1; });
     }
 }
 
-function levelUp() {
+function openShop(player, shop) {
+    if (!shop.getData('isOpen') || isPaused) return;
+    
     isPaused = true;
     this.physics.pause();
-    playerXp = 0; playerLevel++; xpToNextLevel += 50;
-    xpBar.width = 0;
+    
+    let overlay = this.add.rectangle(400, 300, 800, 600, 0x000000, 0.9).setScrollFactor(0).setDepth(200);
+    let title = this.add.text(400, 50, 'МАГАЗИН ОРУЖИЯ', { fontSize: '40px', fill: '#00ffff' }).setOrigin(0.5).setScrollFactor(0).setDepth(200);
+    let coinDisplay = this.add.text(400, 100, 'У ВАС МОНЕТ: ' + playerCoins, { fontSize: '24px', fill: '#ffff00' }).setOrigin(0.5).setScrollFactor(0).setDepth(200);
+    
+    let elements = [overlay, title, coinDisplay];
+
+    let weapons = [
+        { id: 'pistol', name: 'ПИСТОЛЕТ', price: 0, desc: 'Стандартное оружие' },
+        { id: 'shotgun', name: 'ДРОБОВИК', price: 25, desc: '3 пули веером' },
+        { id: 'rifle', name: 'АВТОМАТ', price: 50, desc: 'Очень быстрая стрельба' },
+        { id: 'rpg', name: 'РПГ', price: 100, desc: 'Взрывной урон по области' }
+    ];
+
+    weapons.forEach((weapon, index) => {
+        let y = 180 + index * 90;
+        let btnBg = this.add.rectangle(400, y, 600, 70, 0x113355).setStrokeStyle(2, 0x00ffff).setScrollFactor(0).setDepth(200);
+        let btnText = this.add.text(150, y, weapon.name, { fontSize: '24px', fill: '#fff' }).setOrigin(0, 0.5).setScrollFactor(0).setDepth(200);
+        let btnDesc = this.add.text(150, y + 20, weapon.desc, { fontSize: '16px', fill: '#aaa' }).setOrigin(0, 0.5).setScrollFactor(0).setDepth(200);
+        let priceText = this.add.text(650, y, ownedWeapons[weapon.id] ? 'КУПЛЕНО' : ('🪙 ' + weapon.price), { fontSize: '24px', fill: ownedWeapons[weapon.id] ? '#00ff00' : '#ffff00' }).setOrigin(1, 0.5).setScrollFactor(0).setDepth(200);
+        
+        let zone = this.add.zone(400, y, 600, 70).setInteractive().setScrollFactor(0).setDepth(200);
+        
+        zone.on('pointerdown', () => {
+            if (ownedWeapons[weapon.id]) {
+                currentWeapon = weapon.id;
+                // Применяем текущие карточки к новому оружию
+                fireRate = weaponStats[weapon.id].fireRate * (fireRate / weaponStats.pistol.fireRate); 
+                this.scene.restart(); // Перезапускаем сцену для применения (или просто меняем переменные)
+                return;
+            }
+            if (playerCoins >= weapon.price) {
+                playerCoins -= weapon.price;
+                ownedWeapons[weapon.id] = true;
+                currentWeapon = weapon.id;
+                // Обновляем UI магазина
+                priceText.setText('КУПЛЕНО').setStyle({ fill: '#00ff00' });
+                coinDisplay.setText('У ВАС МОНЕТ: ' + playerCoins);
+            }
+        });
+        
+        elements.push(btnBg, btnText, btnDesc, priceText, zone);
+    });
+
+    // Кнопка закрытия
+    let closeBtn = this.add.text(400, 550, 'ЗАКРЫТЬ', { fontSize: '30px', fill: '#fff', backgroundColor: '#333', padding: { x: 20, y: 10 } }).setOrigin(0.5).setInteractive().setScrollFactor(0).setDepth(200);
+    closeBtn.on('pointerdown', () => {
+        elements.forEach(e => e.destroy()); closeBtn.destroy();
+        isPaused = false; this.physics.resume();
+    });
+    elements.push(closeBtn);
+}
+
+function levelUp() {
+    isPaused = true; this.physics.pause();
+    playerXp = 0; playerLevel++; xpToNextLevel += 50; xpBar.width = 0;
     levelText.setText('LVL: ' + playerLevel);
 
     let overlay = this.add.rectangle(400, 300, 800, 600, 0x000000, 0.85).setScrollFactor(0).setDepth(200);
@@ -422,71 +503,6 @@ function levelUp() {
         { title: 'СКОРОСТЬ АТАКИ', desc: '-15% задержки', color: 0x113355, action: () => fireRate *= 0.85 },
         { title: 'СКОРОСТЬ', desc: '+20 к скорости', color: 0x333333, action: () => moveSpeed += 20 },
         { title: 'МАГНИТ', desc: 'Радиус сбора +50', color: 0x333333, action: () => pickupRadius += 50 },
-        { title: 'ЛЕЧЕНИЕ', desc: 'Восстановить 1 HP', color: 0x333333, action: () => {
-            if (playerHealth < 3) { playerHealth++; hearts[playerHealth-1].clearTint(); }
-        }},
+        { title: 'ЛЕЧЕНИЕ', desc: 'Восстановить 1 HP', color: 0x333333, action: () => { if (playerHealth < 3) { playerHealth++; hearts[playerHealth-1].clearTint(); } } },
         { title: 'ДОП. ПУЛЯ', desc: 'Стреляем веером', color: 0x113355, action: () => bulletCount = Math.min(bulletCount + 1, 5) },
-        { title: 'МАКС. HP', desc: '+1 сердечко', color: 0x551155, action: () => {
-            if (playerHealth < 3) { playerHealth++; hearts[playerHealth-1].clearTint(); }
-        }},
-        { title: 'МЕТЕОРИТ', desc: 'Падает раз в 3 сек', color: 0x551155, action: () => hasMeteor = true },
-        { title: 'ДРОН', desc: 'Летает и стреляет', color: 0x551155, action: () => hasDrone = true },
-        { title: 'СПУТНИК', desc: 'Вращается и бьет', color: 0x551155, action: () => {
-            if (satellites.length < 3) {
-                let sat = this.add.image(player.x, player.y, 'satellite').setDepth(10);
-                satellites.push(sat);
-            }
-        }}
-    ];
-
-    Phaser.Utils.Array.Shuffle(pool);
-    let choices = pool.slice(0, 3);
-    let elements = [overlay, title];
-
-    choices.forEach((choice, index) => {
-        let y = 200 + index * 130;
-        let btnBg = this.add.rectangle(400, y, 500, 100, choice.color).setStrokeStyle(2, 0xffffff).setScrollFactor(0).setDepth(200);
-        let btnTitle = this.add.text(400, y - 20, choice.title, { fontSize: '24px', fill: '#fff' }).setOrigin(0.5).setScrollFactor(0).setDepth(200);
-        let btnDesc = this.add.text(400, y + 20, choice.desc, { fontSize: '18px', fill: '#aaa' }).setOrigin(0.5).setScrollFactor(0).setDepth(200);
-        let zone = this.add.zone(400, y, 500, 100).setInteractive().setScrollFactor(0).setDepth(200);
-        
-        zone.on('pointerover', () => btnBg.setFillStyle(0x44aaff));
-        zone.on('pointerout', () => btnBg.setFillStyle(choice.color));
-        zone.on('pointerdown', () => {
-            choice.action.call(this);
-            elements.forEach(e => e.destroy());
-            btnBg.destroy(); btnTitle.destroy(); btnDesc.destroy();
-            isPaused = false;
-            this.physics.resume();
-        });
-        elements.push(btnBg, btnTitle, btnDesc, zone);
-    });
-}
-
-function castMeteor(scene) {
-    let targets = enemies.getChildren();
-    if (targets.length === 0) return;
-    let targetsToHit = Phaser.Utils.Array.Shuffle(targets).slice(0, 3);
-
-    targetsToHit.forEach(enemy => {
-        let meteor = scene.add.image(enemy.x, enemy.y - 300, 'meteor');
-        scene.tweens.add({
-            targets: meteor, y: enemy.y, duration: 400,
-            onComplete: () => {
-                meteor.destroy();
-                let explosion = scene.add.circle(enemy.x, enemy.y, 50, 0xff5500, 0.6);
-                scene.time.delayedCall(200, () => explosion.destroy());
-                enemies.getChildren().forEach(e => {
-                    if (Phaser.Math.Distance.Between(enemy.x, enemy.y, e.x, e.y) < 60) {
-                        e.hp -= 2; 
-                        if (e.hp <= 0) {
-                            e.destroy();
-                            let xp = xpOrbs.create(e.x, e.y, 'star');
-                            scene.physics.moveToObject(xp, player, 100);
-                        }
-                    }
-                });
-            }
-        });
-    });
-}
+        { title: 'МАКС. HP', desc: '+1 сердечко', color: 0x551155, action: () => { if (playerHealth < 3) { playerHealth++;
