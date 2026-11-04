@@ -51,14 +51,21 @@ let gameTime = 0, timeText, difficultyTimer = 0, enemyHpMultiplier = 1, spawnRat
 let bossSpawnTimer = 0;
 let vampirismChance = 0;
 
+// Оружие и патроны
 let currentWeapon = 'pistol';
 let ownedWeapons = { pistol: true, shotgun: false, rifle: false, rpg: false };
 let weaponStats = {
-    pistol: { fireRate: 800, bulletCount: 1, spread: 0, damage: 1, color: 0x00ffff, speed: 600 },
-    shotgun: { fireRate: 1200, bulletCount: 3, spread: 0.15, damage: 0.7, color: 0xffaa00, speed: 500 }, 
-    rifle: { fireRate: 150, bulletCount: 1, spread: 0.05, damage: 0.8, color: 0xff00ff, speed: 800 },
-    rpg: { fireRate: 2000, bulletCount: 1, spread: 0, damage: 3, color: 0xff0000, speed: 400 }
+    pistol: { fireRate: 800, bulletCount: 1, spread: 0, damage: 1, color: 0x00ffff, speed: 600, maxAmmo: 12, reloadTime: 1000, range: 400 },
+    shotgun: { fireRate: 1200, bulletCount: 3, spread: 0.15, damage: 0.7, color: 0xffaa00, speed: 500, maxAmmo: 6, reloadTime: 1500, range: 250 },
+    rifle: { fireRate: 150, bulletCount: 1, spread: 0.05, damage: 0.8, color: 0xff00ff, speed: 800, maxAmmo: 30, reloadTime: 1500, range: 500 },
+    rpg: { fireRate: 2000, bulletCount: 1, spread: 0, damage: 3, color: 0xff0000, speed: 400, maxAmmo: 3, reloadTime: 2500, range: 450 }
 };
+
+// Состояние патронов
+let currentAmmo = 12;
+let isReloading = false;
+let reloadTimer = 0;
+let ammoText, reloadBar;
 
 let shopPhaseTimer = 0, shopOpen = false;
 let joystick = { active: false, startX: 0, startY: 0, curX: 0, curY: 0, base: null, thumb: null };
@@ -69,6 +76,7 @@ GameScene.prototype.create = function() {
     fireRate = weaponStats.pistol.fireRate; bulletDamage = weaponStats.pistol.damage; bulletCount = weaponStats.pistol.bulletCount;
     hasMeteor = false; hasDrone = false; satellites = []; vampirismChance = 0;
     enemyHpMultiplier = 1; spawnRate = 1500; bossSpawnTimer = 0; shopPhaseTimer = 0; shopOpen = false;
+    currentAmmo = weaponStats.pistol.maxAmmo; isReloading = false;
 
     let g = this.make.graphics({x: 0, y: 0, add: false});
     g.fillStyle(0xffffff, 1); g.fillRect(4, 0, 20, 24); g.fillStyle(0x00aaff, 1); g.fillRect(16, 6, 8, 12); g.fillStyle(0xaaaaaa, 1); g.fillRect(0, 4, 6, 16); g.generateTexture('player', 24, 24); g.clear();
@@ -118,6 +126,10 @@ GameScene.prototype.create = function() {
     coinText = this.add.text(680, 60, '🪙: 0', { fontSize: '24px', fill: '#ffff00' });
     ui.add([xpBar, levelText, timeText, coinText]);
 
+    // UI патронов
+    ammoText = this.add.text(10, 60, 'AMMO: 12/12', { fontSize: '20px', fill: '#fff' }).setScrollFactor(0).setDepth(100);
+    reloadBar = this.add.rectangle(0, 90, 0, 5, 0xff0000).setOrigin(0, 0.5).setScrollFactor(0).setDepth(100);
+
     for (let i = 0; i < maxHealth; i++) {
         hearts.push(this.add.image(30 + i * 30, 60, 'heart').setScrollFactor(0).setDepth(100));
     }
@@ -155,6 +167,17 @@ GameScene.prototype.update = function(time, delta) {
     if (gameOver || isPaused) return;
     gameTime += delta; timeText.setText(Math.floor(gameTime / 60000).toString().padStart(2, '0') + ':' + Math.floor((gameTime % 60000) / 1000).toString().padStart(2, '0'));
     
+    // Перезарядка
+    if (isReloading) {
+        reloadTimer += delta;
+        reloadBar.width = (reloadTimer / weaponStats[currentWeapon].reloadTime) * 200;
+        if (reloadTimer >= weaponStats[currentWeapon].reloadTime) {
+            isReloading = false; reloadTimer = 0; reloadBar.width = 0;
+            currentAmmo = weaponStats[currentWeapon].maxAmmo;
+            ammoText.setText('AMMO: ' + currentAmmo + '/' + weaponStats[currentWeapon].maxAmmo);
+        }
+    }
+
     shopPhaseTimer += delta;
     if (shopPhaseTimer > 150000) { shopOpen = true; shopPhaseTimer = -30000; shops.getChildren().forEach(s => { s.setTexture('shop_open'); s.setData('isOpen', true); }); }
     else if (shopOpen && shopPhaseTimer > 0) { shopOpen = false; shops.getChildren().forEach(s => { s.setTexture('shop_closed'); s.setData('isOpen', false); }); }
@@ -169,7 +192,17 @@ GameScene.prototype.update = function(time, delta) {
     if (joystick.active) { let a = Phaser.Math.Angle.Between(joystick.startX, joystick.startY, joystick.curX, joystick.curY); vx = Math.cos(a); vy = Math.sin(a); }
     let len = Math.sqrt(vx*vx + vy*vy); player.setVelocity(len > 0 ? (vx/len)*moveSpeed : 0, len > 0 ? (vy/len)*moveSpeed : 0);
 
-    if (time > lastFired) { shoot(this); lastFired = time + weaponStats[currentWeapon].fireRate; }
+    // Стрельба
+    if (time > lastFired && !isReloading && currentAmmo > 0) { 
+        shoot(this); 
+        lastFired = time + weaponStats[currentWeapon].fireRate; 
+        currentAmmo--;
+        ammoText.setText('AMMO: ' + currentAmmo + '/' + weaponStats[currentWeapon].maxAmmo);
+        
+        if (currentAmmo <= 0) {
+            isReloading = true;
+        }
+    }
 
     if (hasDrone) {
         if (!drone) drone = this.add.circle(0, 0, 10, 0x00ffff); drone.setVisible(true);
@@ -207,6 +240,10 @@ function shoot(scene) {
         let off = (i - (count - 1) / 2) * currentSpread; 
         let b = bullets.create(player.x, player.y, 'bullet');
         b.setTint(s.color); b.rotation = angle + off; b.damage = s.damage * bulletDamage;
+        // Устанавливаем максимальную дистанцию для пули
+        b.range = s.range;
+        b.startX = player.x;
+        b.startY = player.y;
         scene.physics.velocityFromRotation(angle + off, s.speed, b.body.velocity);
     }
 }
@@ -214,6 +251,9 @@ function shootFrom(scene, x, y) {
     let target = getNearestEnemy(scene, x, y); if (!target) return;
     let angle = Phaser.Math.Angle.Between(x, y, target.x, target.y);
     let b = bullets.create(x, y, 'bullet'); b.rotation = angle; b.damage = bulletDamage;
+    b.range = weaponStats[currentWeapon].range; 
+    b.startX = x;
+    b.startY = y;
     scene.physics.velocityFromRotation(angle, 600, b.body.velocity);
 }
 function getNearestEnemy(scene, x, y) {
@@ -228,7 +268,6 @@ function spawnEnemy() {
     if (rand > 0.7 && gameTime > 20000) { type = 'enemy_flyer'; speed = 150; hp = 1; }
     else if (rand > 0.4 && gameTime > 40000) { type = 'enemy_tank'; speed = 50; hp = 3; }
 
-    // Спавн за пределами экрана на расстоянии 600 от игрока
     let angle = Math.random() * Math.PI * 2;
     let distance = 600; 
     let x = player.x + Math.cos(angle) * distance;
@@ -296,9 +335,10 @@ function openShop(p, s) {
         let price = this.add.text(650, y, ownedWeapons[w.id] ? 'КУПЛЕНО' : ('🪙 ' + w.price), { fontSize: '24px', fill: ownedWeapons[w.id] ? '#00ff00' : '#ffff00' }).setOrigin(1, 0.5).setScrollFactor(0).setDepth(200);
         let zone = this.add.zone(400, y, 600, 70).setInteractive().setScrollFactor(0).setDepth(200);
         zone.on('pointerdown', () => {
-            if (ownedWeapons[w.id]) { currentWeapon = w.id; elements.forEach(e=>e.destroy()); bg.destroy(); name.destroy(); desc.destroy(); price.destroy(); zone.destroy(); this.physics.resume(); isPaused = false; return; }
+            if (ownedWeapons[w.id]) { currentWeapon = w.id; currentAmmo = weaponStats[currentWeapon].maxAmmo; ammoText.setText('AMMO: ' + currentAmmo + '/' + weaponStats[currentWeapon].maxAmmo); elements.forEach(e=>e.destroy()); bg.destroy(); name.destroy(); desc.destroy(); price.destroy(); zone.destroy(); this.physics.resume(); isPaused = false; return; }
             if (playerCoins >= w.price) {
                 playerCoins -= w.price; ownedWeapons[w.id] = true; currentWeapon = w.id;
+                currentAmmo = weaponStats[currentWeapon].maxAmmo; ammoText.setText('AMMO: ' + currentAmmo + '/' + weaponStats[currentWeapon].maxAmmo);
                 price.setText('КУПЛЕНО').setStyle({ fill: '#00ff00' }); coinDisplay.setText('У ВАС МОНЕТ: ' + playerCoins);
             }
         });
@@ -316,8 +356,8 @@ function levelUp() {
     let pool = [
         { title: 'УРОН', desc: '+1 к урону', color: 0x113355, action: () => bulletDamage += 1 },
         { title: 'СКОРОСТЬ АТАКИ', desc: '-15% задержки', color: 0x113355, action: () => fireRate *= 0.85 },
-        { title: 'СКОРОСТЬ', desc: '+20 к скорости', color: 0x333333, action: () => moveSpeed += 20 },
-        { title: 'МАГНИТ', desc: 'Радиус сбора +50', color: 0x333333, action: () => pickupRadius += 50 },
+        { title: 'СКОРОСТЬ', desc: '+20 к скорости', color: 0x333333, action: () => moveSpeed +=
+                    { title: 'МАГНИТ', desc: 'Радиус сбора +50', color: 0x333333, action: () => pickupRadius += 50 },
         { title: 'ЛЕЧЕНИЕ', desc: 'Восстановить 1 HP', color: 0x333333, action: () => { if (playerHealth < maxHealth) { playerHealth++; hearts[playerHealth-1].clearTint(); } } },
         { title: 'ДОП. ПУЛЯ', desc: 'Стреляем веером', color: 0x113355, action: () => bulletCount = Math.min(bulletCount + 1, 5) },
         { title: 'МАКС. HP', desc: '+1 сердечко', color: 0x551155, action: () => { 
