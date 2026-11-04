@@ -5,7 +5,7 @@ const config = {
     parent: 'game',
     backgroundColor: '#050510',
     scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
-    physics: { default: 'arcade', arcade: { gravity: { y: 0 }, debug: false } }, // debug выключен!
+    physics: { default: 'arcade', arcade: { gravity: { y: 0 }, debug: false } },
     scene: [BootScene, MenuScene, WardrobeScene, GameScene]
 };
 
@@ -22,40 +22,19 @@ BootScene.prototype.create = function() {
     let g = this.make.graphics({x: 0, y: 0, add: false});
     let p = 4;
 
-    // --- 1. КОСМОНАВТЫ ---
+    // Космонавты
     // Классический
-    g.clear();
-    g.fillStyle(0xffffff, 1);
-    g.fillRect(2*p, 2*p, 4*p, 2*p); g.fillRect(1*p, 4*p, 6*p, 4*p); g.fillRect(2*p, 8*p, 4*p, 4*p);
-    g.fillRect(1*p, 8*p, 1*p, 4*p); g.fillRect(6*p, 8*p, 1*p, 4*p); g.fillRect(2*p, 12*p, 1*p, 2*p); g.fillRect(5*p, 12*p, 1*p, 2*p);
-    g.fillStyle(0x1a1a3a, 1); g.fillRect(2*p, 4*p, 4*p, 4*p); g.fillStyle(0xccccff, 1); g.fillRect(2*p, 4*p, 2*p, 2*p);
-    g.fillStyle(0xff0000, 1); g.fillRect(2*p, 9*p, 1*p, 1*p); g.fillStyle(0x00ffff, 1); g.fillRect(3*p, 9*p, 1*p, 1*p);
-    g.fillStyle(0x555555, 1); g.fillRect(7*p, 6*p, 2*p, 6*p); g.fillStyle(0x333333, 1); g.fillRect(8*p, 12*p, 1*p, 2*p); 
-    g.generateTexture('player_classic', 10*p, 16*p);
+    g.clear(); g.fillStyle(0xffffff, 1); g.fillRect(2*p, 2*p, 4*p, 2*p); g.fillRect(1*p, 4*p, 6*p, 4*p); g.fillRect(2*p, 8*p, 4*p, 4*p); g.fillRect(1*p, 8*p, 1*p, 4*p); g.fillRect(6*p, 8*p, 1*p, 4*p); g.fillRect(2*p, 12*p, 1*p, 2*p); g.fillRect(5*p, 12*p, 1*p, 2*p); g.fillStyle(0x1a1a3a, 1); g.fillRect(2*p, 4*p, 4*p, 4*p); g.fillStyle(0xccccff, 1); g.fillRect(2*p, 4*p, 2*p, 2*p); g.fillStyle(0xff0000, 1); g.fillRect(2*p, 9*p, 1*p, 1*p); g.fillStyle(0x00ffff, 1); g.fillRect(3*p, 9*p, 1*p, 1*p); g.fillStyle(0x555555, 1); g.fillRect(7*p, 6*p, 2*p, 6*p); g.fillStyle(0x333333, 1); g.fillRect(8*p, 12*p, 1*p, 2*p); g.generateTexture('player_classic', 10*p, 16*p);
 
     // Тяжелый
-    g.clear();
-    g.fillStyle(0xff5500, 1);
-    g.fillRect(1*p, 1*p, 6*p, 2*p); g.fillRect(0*p, 3*p, 8*p, 5*p); g.fillRect(1*p, 8*p, 6*p, 4*p);
-    g.fillRect(0*p, 8*p, 1*p, 4*p); g.fillRect(7*p, 8*p, 1*p, 4*p); g.fillRect(1*p, 12*p, 2*p, 3*p); g.fillRect(5*p, 12*p, 2*p, 3*p);
-    g.fillStyle(0x222222, 1); g.fillRect(2*p, 3*p, 4*p, 3*p);
-    g.fillStyle(0xffff00, 1); g.fillRect(2*p, 9*p, 1*p, 1*p); g.fillRect(4*p, 9*p, 1*p, 1*p);
-    g.fillStyle(0x333333, 1); g.fillRect(8*p, 5*p, 2*p, 8*p);
-    g.generateTexture('player_heavy', 10*p, 16*p);
+    g.clear(); g.fillStyle(0xff5500, 1); g.fillRect(1*p, 1*p, 6*p, 2*p); g.fillRect(0*p, 3*p, 8*p, 5*p); g.fillRect(1*p, 8*p, 6*p, 4*p); g.fillRect(0*p, 8*p, 1*p, 4*p); g.fillRect(7*p, 8*p, 1*p, 4*p); g.fillRect(1*p, 12*p, 2*p, 3*p); g.fillRect(5*p, 12*p, 2*p, 3*p); g.fillStyle(0x222222, 1); g.fillRect(2*p, 3*p, 4*p, 3*p); g.fillStyle(0xffff00, 1); g.fillRect(2*p, 9*p, 1*p, 1*p); g.fillRect(4*p, 9*p, 1*p, 1*p); g.fillStyle(0x333333, 1); g.fillRect(8*p, 5*p, 2*p, 8*p); g.generateTexture('player_heavy', 10*p, 16*p);
 
     // Разведчик
-    g.clear();
-    g.fillStyle(0x333333, 1);
-    g.fillRect(3*p, 2*p, 3*p, 2*p); g.fillRect(2*p, 4*p, 5*p, 5*p); g.fillRect(3*p, 9*p, 3*p, 3*p);
-    g.fillRect(1*p, 9*p, 1*p, 3*p); g.fillRect(6*p, 9*p, 1*p, 3*p); g.fillRect(3*p, 12*p, 1*p, 2*p); g.fillRect(5*p, 12*p, 1*p, 2*p);
-    g.fillStyle(0x00ff00, 1); g.fillRect(3*p, 5*p, 3*p, 2*p);
-    g.fillStyle(0x555555, 1); g.fillRect(7*p, 7*p, 2*p, 5*p);
-    g.generateTexture('player_scout', 10*p, 16*p);
+    g.clear(); g.fillStyle(0x333333, 1); g.fillRect(3*p, 2*p, 3*p, 2*p); g.fillRect(2*p, 4*p, 5*p, 5*p); g.fillRect(3*p, 9*p, 3*p, 3*p); g.fillRect(1*p, 9*p, 1*p, 3*p); g.fillRect(6*p, 9*p, 1*p, 3*p); g.fillRect(3*p, 12*p, 1*p, 2*p); g.fillRect(5*p, 12*p, 1*p, 2*p); g.fillStyle(0x00ff00, 1); g.fillRect(3*p, 5*p, 3*p, 2*p); g.fillStyle(0x555555, 1); g.fillRect(7*p, 7*p, 2*p, 5*p); g.generateTexture('player_scout', 10*p, 16*p);
 
-    // Частица огня
     g.clear(); g.fillStyle(0xff8800, 1); g.fillCircle(3, 3, 3); g.generateTexture('flame', 6, 6);
 
-    // --- 2. ПРИШЕЛЬЦЫ ---
+    // Враги
     g.clear(); g.fillStyle(0x00ff00, 1); g.fillRect(2*p, 1*p, 4*p, 2*p); g.fillRect(1*p, 3*p, 6*p, 3*p); g.fillRect(0*p, 4*p, 1*p, 1*p); g.fillRect(7*p, 4*p, 1*p, 1*p); g.fillStyle(0x000000, 1); g.fillRect(3*p, 2*p, 1*p, 1*p); g.fillRect(5*p, 2*p, 1*p, 1*p); g.generateTexture('enemy_small', 8*p, 6*p);
     g.clear(); g.fillStyle(0xaa00ff, 1); g.fillRect(1*p, 0*p, 6*p, 2*p); g.fillRect(2*p, 2*p, 4*p, 4*p); g.fillRect(1*p, 3*p, 1*p, 3*p); g.fillRect(6*p, 3*p, 1*p, 3*p); g.fillStyle(0xffffff, 1); g.fillRect(3*p, 2*p, 1*p, 1*p); g.fillRect(5*p, 2*p, 1*p, 1*p); g.generateTexture('enemy_medium', 8*p, 6*p);
     g.clear(); g.fillStyle(0xff0044, 1); g.fillRect(1*p, 1*p, 6*p, 5*p); g.fillRect(0*p, 2*p, 1*p, 3*p); g.fillRect(7*p, 2*p, 1*p, 3*p); g.fillStyle(0x000000, 1); g.fillRect(2*p, 2*p, 4*p, 2*p); g.generateTexture('enemy_tank', 8*p, 7*p);
@@ -64,16 +43,14 @@ BootScene.prototype.create = function() {
     // Босс
     g.clear(); g.fillStyle(0x8800ff, 1); g.fillCircle(64, 64, 60); g.fillStyle(0xff0000, 1); g.fillCircle(40, 40, 15); g.fillCircle(88, 40, 15); g.fillCircle(64, 80, 20); g.generateTexture('enemy_boss', 128, 128);
 
-    // --- 3. МАГАЗИН-РАКЕТА ---
+    // Магазин
     g.clear(); g.fillStyle(0xeeeeee, 1); g.fillRect(10, 20, 44, 40); g.fillStyle(0xdddddd, 1); g.fillTriangle(10, 20, 32, 0, 54, 20); g.fillStyle(0xff0000, 1); g.fillTriangle(10, 60, 10, 40, 0, 60); g.fillTriangle(54, 60, 54, 40, 64, 60); g.fillStyle(0x333333, 1); g.fillRect(24, 40, 16, 20); g.fillStyle(0xff0000, 1); g.fillRect(14, 24, 36, 10); g.generateTexture('shop_closed', 64, 64);
     g.clear(); g.fillStyle(0xeeeeee, 1); g.fillRect(10, 20, 44, 40); g.fillStyle(0xdddddd, 1); g.fillTriangle(10, 20, 32, 0, 54, 20); g.fillStyle(0xff0000, 1); g.fillTriangle(10, 60, 10, 40, 0, 60); g.fillTriangle(54, 60, 54, 40, 64, 60); g.fillStyle(0x333333, 1); g.fillRect(24, 40, 16, 20); g.fillStyle(0x00ff00, 1); g.fillRect(14, 24, 36, 10); g.generateTexture('shop_open', 64, 64);
 
-    // --- 4. ОКРУЖЕНИЕ ---
+    // Остальное
     g.clear(); g.fillStyle(0x333333, 1); g.fillCircle(24, 24, 22); g.fillStyle(0x222222, 1); g.fillCircle(15, 15, 6); g.fillCircle(30, 25, 8); g.generateTexture('obstacle_rock', 48, 48);
     g.clear(); g.fillStyle(0x666666, 1); g.fillRect(10, 10, 30, 30); g.fillStyle(0x999999, 1); g.fillRect(15, 15, 5, 20); g.fillStyle(0xff0000, 1); g.fillRect(25, 25, 10, 10); g.generateTexture('obstacle_debris', 50, 50);
     g.clear(); g.fillStyle(0x000000, 1); g.fillCircle(30, 30, 28); g.lineStyle(4, 0x8800ff, 0.8); g.strokeCircle(30, 30, 28); g.generateTexture('obstacle_blackhole', 60, 60);
-
-    // --- 5. ОСТАЛЬНОЕ ---
     g.clear(); g.fillStyle(0x00ffff, 1); g.fillRect(0, 0, 12, 4); g.generateTexture('bullet_pistol', 12, 4);
     g.clear(); g.fillStyle(0xffaa00, 1); g.fillRect(0, 0, 8, 4); g.generateTexture('bullet_shotgun', 8, 4);
     g.clear(); g.fillStyle(0xff00ff, 1); g.fillRect(0, 0, 18, 3); g.generateTexture('bullet_rifle', 18, 3);
@@ -85,19 +62,14 @@ BootScene.prototype.create = function() {
     g.clear(); g.fillStyle(0xffffff, 1); g.fillCircle(3, 3, 3); g.generateTexture('particle_white', 6, 6);
     g.clear(); g.fillStyle(0xff0000, 1); g.fillCircle(3, 3, 3); g.generateTexture('particle_red', 6, 6);
     
-    // КРАСИВЫЙ ФОН МЕНЮ
-    g.clear(); 
-    g.fillStyle(0x050510, 1); g.fillRect(0, 0, 800, 600);
+    // Фоны
+    g.clear(); g.fillStyle(0x050510, 1); g.fillRect(0, 0, 800, 600);
     for(let i=0; i<300; i++) { g.fillStyle(0xffffff, Phaser.Math.FloatBetween(0.1, 0.9)); g.fillCircle(Phaser.Math.Between(0, 800), Phaser.Math.Between(0, 600), Phaser.Math.Between(1, 3)); }
     for(let i=0; i<5; i++) { g.fillStyle(0x330066, 0.3); g.fillCircle(Phaser.Math.Between(0, 800), Phaser.Math.Between(0, 600), Phaser.Math.Between(100, 200)); }
     g.generateTexture('menu_bg', 800, 600);
-
-    // ФОН ДЛЯ ИГРЫ (Просто темный космос со звездами)
-    g.clear();
-    g.fillStyle(0x050510, 1); g.fillRect(0, 0, 800, 600);
+    g.clear(); g.fillStyle(0x050510, 1); g.fillRect(0, 0, 800, 600);
     for(let i=0; i<150; i++) { g.fillStyle(0xffffff, Phaser.Math.FloatBetween(0.1, 0.6)); g.fillCircle(Phaser.Math.Between(0, 800), Phaser.Math.Between(0, 600), Phaser.Math.Between(1, 2)); }
-    g.generateTexture('bg_tile', 800, 600); 
-    g.destroy();
+    g.generateTexture('bg_tile', 800, 600); g.destroy();
 
     this.scene.start('MenuScene');
 };
@@ -108,7 +80,6 @@ MenuScene.prototype = Object.create(Phaser.Scene.prototype);
 MenuScene.prototype.constructor = MenuScene;
 MenuScene.prototype.create = function() {
     this.add.image(400, 300, 'menu_bg');
-    
     this.add.text(400, 100, 'КОСМИЧЕСКИЙ ВЫЖИВШИЙ', { ...pixelFont, fontSize: '32px', fill: '#00ffff', stroke: '#000', strokeThickness: 8 }).setOrigin(0.5);
     this.add.text(400, 180, 'РЕКОРД: ' + Math.floor(bestTime / 1000) + ' СЕК', { ...pixelFont, fontSize: '18px', fill: '#ffff00' }).setOrigin(0.5);
 
@@ -142,11 +113,9 @@ WardrobeScene.prototype.create = function() {
     skins.forEach((skin, index) => {
         let x = 200 + index * 200;
         let y = 300;
-        
         let frame = this.add.rectangle(x, y, 150, 200, 0x000000).setStrokeStyle(3, skin.id === selectedSkin ? 0x00ff00 : 0x333333).setInteractive();
         this.add.sprite(x, y - 30, skin.id).setScale(3);
         this.add.text(x, y + 60, skin.name, { ...pixelFont, fontSize: '10px', fill: '#fff' }).setOrigin(0.5);
-        
         frame.on('pointerover', () => frame.setFillStyle(0x222222));
         frame.on('pointerout', () => frame.setFillStyle(0x000000));
         frame.on('pointerdown', () => { selectedSkin = skin.id; this.scene.restart(); });
@@ -185,6 +154,11 @@ let shopPhaseTimer = 0, shopOpen = false;
 let joystick = { active: false, startX: 0, startY: 0, curX: 0, curY: 0, base: null, thumb: null };
 let currentBoss = null;
 
+// Новые переменные для карточек
+let vampirismChance = 0;
+let isExplosive = false;
+let attackRange = 500;
+
 GameScene.prototype.create = function() {
     gameOver = false; isPaused = false; playerHealth = 3; maxHealth = 3; hearts = []; playerXp = 0; playerLevel = 1; xpToNextLevel = 30; gameTime = 0; playerCoins = 0;
     currentWeapon = 'pistol'; ownedWeapons = { pistol: true, shotgun: false, rifle: false, rpg: false };
@@ -192,6 +166,7 @@ GameScene.prototype.create = function() {
     hasMeteor = false; satellites = []; drones = []; droneFireRate = 1000; meteorFallSpeed = 5000;
     bossSpawnTimer = 0; shopPhaseTimer = 0; shopOpen = false; currentBoss = null;
     currentAmmo = weaponStats.pistol.maxAmmo; isReloading = false;
+    vampirismChance = 0; isExplosive = false; attackRange = 500;
 
     this.add.tileSprite(-2500, -2500, 5000, 5000, 'bg_tile').setOrigin(0);
     this.physics.world.setBounds(-2500, -2500, 5000, 5000);
@@ -223,43 +198,29 @@ GameScene.prototype.create = function() {
     player.setCollideWorldBounds(true); 
     player.body.setCircle(12, 4, 4); 
     this.cameras.main.startFollow(player, true, 0.1, 0.1);
-    this.cameras.main.setZoom(0.6); // УВЕЛИЧЕННЫЙ ОБЗОР
+    this.cameras.main.setZoom(0.6);
 
     player.flameEmitter = this.add.particles(0, 0, 'flame', {
-        speed: { min: 20, max: 50 },
-        scale: { start: 0.8, end: 0 },
-        lifespan: 200,
-        frequency: 50,
-        quantity: 2
+        speed: { min: 20, max: 50 }, scale: { start: 0.8, end: 0 }, lifespan: 200, frequency: 50, quantity: 2
     });
     player.flameEmitter.startFollow(player, 0, 10); 
     player.flameEmitter.stop();
 
     bullets = this.physics.add.group(); enemies = this.physics.add.group(); xpOrbs = this.physics.add.group(); coins = this.physics.add.group();
 
-    // === ИНТЕРФЕЙС (Крупный и по углам) ===
+    // Интерфейс
     let ui = this.add.container(0, 0).setScrollFactor(0).setDepth(100);
-    
-    // Полоска опыта (сверху)
     ui.add(this.add.rectangle(400, 20, 800, 40, 0x000000).setOrigin(0.5).setAlpha(0.8));
     xpBar = this.add.rectangle(0, 20, 0, 20, 0x00ffff).setOrigin(0, 0.5);
-    
-    // Уровень (слева)
     levelText = this.add.text(30, 50, 'LVL: 1', { ...pixelFont, fontSize: '24px', fill: '#00ffff' });
-    // Таймер (по центру)
     timeText = this.add.text(400, 10, '00:00', { ...pixelFont, fontSize: '24px', fill: '#ffffff' }).setOrigin(0.5, 0);
-    // Монеты (справа)
     coinText = this.add.text(780, 50, '🪙: 0', { ...pixelFont, fontSize: '24px', fill: '#ffff00' }).setOrigin(1, 0);
-    
     ui.add([xpBar, levelText, timeText, coinText]);
 
-    // Патроны (слева под уровнем)
     ammoText = this.add.text(30, 110, 'AMMO: 12/12', { ...pixelFont, fontSize: '18px', fill: '#fff' }).setScrollFactor(0).setDepth(100);
     reloadBar = this.add.rectangle(30, 140, 0, 8, 0xff0000).setOrigin(0, 0.5).setScrollFactor(0).setDepth(100);
-
     bossHpBar = this.add.rectangle(400, 80, 0, 15, 0xff0000).setScrollFactor(0).setDepth(100).setVisible(false);
 
-    // Сердечки
     for (let i = 0; i < maxHealth; i++) {
         hearts.push(this.add.image(50 + i * 40, 180, 'heart').setScale(1.5).setScrollFactor(0).setDepth(100));
     }
@@ -323,10 +284,7 @@ GameScene.prototype.update = function(time, delta) {
     if (len > 0) {
         player.setVelocity((vx/len)*moveSpeed, (vy/len)*moveSpeed);
         player.setFlipX(vx < 0); 
-        if (!player.flameEmitter.emitting) {
-            player.flameEmitter.start();
-            player.flameEmitter.angle = { min: 70, max: 110 }; 
-        }
+        if (!player.flameEmitter.emitting) { player.flameEmitter.start(); player.flameEmitter.angle = { min: 70, max: 110 }; }
     } else {
         player.setVelocity(0);
         player.flameEmitter.stop(); 
@@ -365,10 +323,7 @@ GameScene.prototype.update = function(time, delta) {
     } else { bossHpBar.setVisible(false); }
 
     enemies.getChildren().forEach(e => { 
-        if (e.active) {
-            this.physics.moveToObject(e, player, e.speed); 
-            e.setFlipX(e.x > player.x); 
-        } 
+        if (e.active) { this.physics.moveToObject(e, player, e.speed); e.setFlipX(e.x > player.x); } 
     });
     xpOrbs.getChildren().forEach(xp => { 
         let dist = Phaser.Math.Distance.Between(player.x, player.y, xp.x, xp.y);
@@ -384,7 +339,7 @@ function shoot(scene) {
     let target = getNearestEnemy(scene, player.x, player.y); 
     if (!target) return false;
     let distToEnemy = Phaser.Math.Distance.Between(player.x, player.y, target.x, target.y);
-    if (distToEnemy > 500) return false; 
+    if (distToEnemy > attackRange) return false; 
 
     let angle = Phaser.Math.Angle.Between(player.x, player.y, target.x, target.y);
     let s = weaponStats[currentWeapon]; let count = s.bulletCount + (bulletCount - 1);
@@ -437,7 +392,7 @@ function spawnBoss(scene) {
 }
 function hitEnemy(b, e) {
     b.destroy();
-    if (b.isRpg) {
+    if (b.isRpg || isExplosive) {
         let exp = this.add.circle(e.x, e.y, 80, 0xff5500, 0.5); this.time.delayedCall(100, () => exp.destroy());
         enemies.getChildren().forEach(en => { if (Phaser.Math.Distance.Between(e.x, e.y, en.x, en.y) < 80) { damageEnemy(this, en, b.damage * 2); } });
     } else {
@@ -457,6 +412,11 @@ function killEnemy(scene, e) {
     e.destroy(); 
     let xp = xpOrbs.create(e.x, e.y, 'xp_gem'); xp.setScale(0.5);
     let c = coins.create(e.x, e.y, 'coin'); c.setScale(0.5);
+
+    // Вампиризм
+    if (Math.random() < vampirismChance && playerHealth < maxHealth) {
+        playerHealth++; hearts[playerHealth-1].clearTint();
+    }
 
     if (e.isBoss) { 
         for(let i=0; i<15; i++){ let x = xpOrbs.create(e.x, e.y, 'xp_gem'); if(i<5) coins.create(e.x, e.y, 'coin'); } 
@@ -522,10 +482,13 @@ function levelUp() {
         { title: 'СКОРОСТЬ', desc: '+20 к скорости', color: 0x333333, action: () => moveSpeed += 20 },
         { title: 'ЛЕЧЕНИЕ', desc: 'Восстановить 1 HP', color: 0x333333, action: () => { if (playerHealth < maxHealth) { playerHealth++; hearts[playerHealth-1].clearTint(); } } },
         { title: 'ДОП. ПУЛЯ', desc: '+1 снаряд', color: 0x113355, action: () => bulletCount = Math.min(bulletCount + 1, 7) },
-        { title: 'МАКС. HP', desc: '+1 сердечко', color: 0x551155, action: () => { maxHealth++; playerHealth = maxHealth; let newHeart = this.add.image(30 + (maxHealth - 1) * 30, 60, 'heart').setScrollFactor(0).setDepth(100); hearts.push(newHeart); hearts.forEach(h => h.clearTint()); } },
+        { title: 'МАКС. HP', desc: '+1 сердечко', color: 0x551155, action: () => { maxHealth++; playerHealth = maxHealth; let newHeart = this.add.image(30 + (maxHealth - 1) * 40, 140, 'heart').setScale(1.5).setScrollFactor(0).setDepth(100); hearts.push(newHeart); hearts.forEach(h => h.clearTint()); } },
         { title: 'МЕТЕОРИТ', desc: 'Падает чаще', color: 0x551155, action: () => { hasMeteor = true; meteorFallSpeed = Math.max(1000, meteorFallSpeed - 500); } },
         { title: 'ДРОН', desc: '+1 дрон', color: 0x551155, action: () => { if (drones.length < 4) { let d = this.add.circle(0, 0, 8, 0x00ffff).setDepth(5); d.lastFired = 0; drones.push(d); } } },
-        { title: 'СПУТНИК', desc: 'Вращается и бьет', color: 0x551155, action: () => { if (satellites.length < 3) { let s = this.add.image(player.x, player.y, 'satellite').setDepth(5); satellites.push(s); } } }
+        { title: 'СПУТНИК', desc: 'Вращается и бьет', color: 0x551155, action: () => { if (satellites.length < 3) { let s = this.add.image(player.x, player.y, 'satellite').setDepth(5); satellites.push(s); } } },
+        { title: 'ВАМПИРИЗМ', desc: '5% шанс лечения с врага', color: 0x880000, action: () => vampirismChance += 0.05 },
+        { title: 'ВЗРЫВНЫЕ ПУЛИ', desc: 'Пули бьют по площади', color: 0xff8800, action: () => { isExplosive = true; } },
+        { title: 'ДАЛЬНОСТЬ', desc: '+100 к радиусу', color: 0x333333, action: () => attackRange += 100 }
     ];
 
     Phaser.Utils.Array.Shuffle(pool); let choices = pool.slice(0, 3); let elements = [overlay, title];
