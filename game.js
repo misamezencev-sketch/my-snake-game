@@ -9,16 +9,58 @@ const config = {
         default: 'arcade',
         arcade: { gravity: { y: 0 }, debug: false }
     },
-    scene: {
-        preload: preload,
-        create: create,
-        update: update
-    }
+    scene: [MenuScene, GameScene] // Две сцены: Меню и Игра
 };
 
 const game = new Phaser.Game(config);
 
-// Глобальные переменные
+// ==========================================
+// СЦЕНА 1: ГЛАВНОЕ МЕНЮ
+// ==========================================
+function MenuScene() {
+    Phaser.Scene.call(this, { key: 'MenuScene' });
+}
+MenuScene.prototype = Object.create(Phaser.Scene.prototype);
+MenuScene.prototype.constructor = MenuScene;
+
+MenuScene.prototype.create = function() {
+    // Фон меню (просто темный цвет со звездами)
+    let graphics = this.make.graphics({x: 0, y: 0, add: false});
+    for (let i = 0; i < 100; i++) {
+        let size = Phaser.Math.Between(1, 3);
+        graphics.fillStyle(0xffffff, Phaser.Math.FloatBetween(0.1, 0.8));
+        graphics.fillCircle(Phaser.Math.Between(0, 800), Phaser.Math.Between(0, 600), size);
+    }
+    graphics.generateTexture('menu_bg', 800, 600);
+    
+    this.add.image(400, 300, 'menu_bg');
+
+    // Заголовок
+    this.add.text(400, 150, 'КОСМИЧЕСКИЙ ВЫЖИВШИЙ', { 
+        fontSize: '48px', fill: '#00ffff', fontFamily: 'Arial', fontWeight: 'bold'
+    }).setOrigin(0.5);
+
+    // Кнопка Играть
+    let playBtn = this.add.rectangle(400, 400, 300, 80, 0x113355).setStrokeStyle(3, 0x00ffff).setInteractive();
+    this.add.text(400, 400, 'ИГРАТЬ', { fontSize: '36px', fill: '#ffffff' }).setOrigin(0.5);
+
+    playBtn.on('pointerover', () => playBtn.setFillStyle(0x225588));
+    playBtn.on('pointerout', () => playBtn.setFillStyle(0x113355));
+    playBtn.on('pointerdown', () => {
+        this.scene.start('GameScene');
+    });
+};
+
+// ==========================================
+// СЦЕНА 2: ИГРА
+// ==========================================
+function GameScene() {
+    Phaser.Scene.call(this, { key: 'GameScene' });
+}
+GameScene.prototype = Object.create(Phaser.Scene.prototype);
+GameScene.prototype.constructor = GameScene;
+
+// Глобальные переменные игры
 let player;
 let bullets;
 let enemies;
@@ -40,7 +82,6 @@ let isPaused = false;
 let cursors;
 let keys;
 
-// Прокачка
 let fireRate = 800; 
 let bulletDamage = 1;
 let moveSpeed = 250;
@@ -53,7 +94,6 @@ let lastFired = 0;
 let lastDroneFired = 0;
 let meteorTimer = 0;
 
-// Сложность
 let gameTime = 0;
 let timeText;
 let difficultyTimer = 0;
@@ -61,12 +101,14 @@ let enemyHpMultiplier = 1;
 let spawnRate = 1500;
 let spawnTimer;
 
-// Виртуальный джойстик
 let joystick = { active: false, startX: 0, startY: 0, curX: 0, curY: 0, base: null, thumb: null };
 
-function preload() {}
+GameScene.prototype.preload = function() {
+    // Загружаем картинку для меню (если она есть в репозитории)
+    this.load.image('menu_bg_img', 'bg.png');
+};
 
-function create() {
+GameScene.prototype.create = function() {
     // Сброс переменных
     gameOver = false; isPaused = false; playerHealth = 3; hearts = [];
     playerXp = 0; playerLevel = 1; xpToNextLevel = 100; gameTime = 0;
@@ -76,21 +118,10 @@ function create() {
 
     // --- ГЕНЕРАЦИЯ ТЕКСТУР ---
     let graphics = this.make.graphics({x: 0, y: 0, add: false});
-    
-    // Звездный фон (текстура 800x600, потом замостим)
-    for (let i = 0; i < 150; i++) {
-        let size = Phaser.Math.Between(1, 3);
-        graphics.fillStyle(0xffffff, Phaser.Math.FloatBetween(0.1, 0.8));
-        graphics.fillCircle(Phaser.Math.Between(0, 800), Phaser.Math.Between(0, 600), size);
-    }
-    graphics.generateTexture('bg_tile', 800, 600);
-
-    // Игрок
     graphics.fillStyle(0xffffff, 1); graphics.fillRect(0, 0, 24, 24);
     graphics.fillStyle(0x00aaff, 1); graphics.fillRect(16, 4, 8, 16);
     graphics.generateTexture('player', 24, 24);
     
-    // Враги
     graphics.fillStyle(0x00ff44, 1); graphics.fillCircle(15, 15, 15); 
     graphics.generateTexture('enemy_slime', 30, 30);
     graphics.fillStyle(0xaa00ff, 1); graphics.fillTriangle(15, 0, 30, 30, 0, 30); 
@@ -98,38 +129,36 @@ function create() {
     graphics.fillStyle(0xff3300, 1); graphics.fillRect(0, 0, 40, 40); 
     graphics.generateTexture('enemy_tank', 40, 40);
 
-    // Пуля и Звезда
     graphics.fillStyle(0x00ffff, 1); graphics.fillRect(0, 0, 15, 4);
     graphics.generateTexture('bullet', 15, 4);
     graphics.fillStyle(0xffff00, 1); graphics.fillStar(10, 10, 5, 10, 5);
     graphics.generateTexture('star', 20, 20);
     
-    // Сердечко
     graphics.fillStyle(0xff0000, 1); 
     graphics.fillCircle(7, 7, 7); graphics.fillCircle(17, 7, 7); graphics.fillTriangle(0, 10, 24, 10, 12, 24);
     graphics.generateTexture('heart', 24, 24);
 
-    // Метеорит
     graphics.fillStyle(0xff5500, 1); graphics.fillCircle(20, 20, 20);
     graphics.generateTexture('meteor', 40, 40);
 
-    // Кратер
     graphics.fillStyle(0x1a1a1a, 1); graphics.fillCircle(40, 40, 40);
     graphics.lineStyle(4, 0x333333, 1); graphics.strokeCircle(40, 40, 40);
     graphics.generateTexture('crater', 80, 80);
 
-    // Спутник
     graphics.fillStyle(0x00ffff, 1); graphics.fillCircle(10, 10, 10);
     graphics.generateTexture('satellite', 20, 20);
 
-    // --- ФОН (Бесконечный) ---
-    // Застилаем фоном огромную площадь
-    this.add.tileSprite(-2500, -2500, 5000, 5000, 'bg_tile').setOrigin(0);
+    // Фон (Звезды)
+    for (let i = 0; i < 150; i++) {
+        let size = Phaser.Math.Between(1, 3);
+        graphics.fillStyle(0xffffff, Phaser.Math.FloatBetween(0.1, 0.8));
+        graphics.fillCircle(Phaser.Math.Between(0, 800), Phaser.Math.Between(0, 600), size);
+    }
+    graphics.generateTexture('bg_tile', 800, 600);
 
-    // --- МИР (Огромный) ---
+    // --- МИР И КАМЕРА ---
+    this.add.tileSprite(-2500, -2500, 5000, 5000, 'bg_tile').setOrigin(0);
     this.physics.world.setBounds(-2500, -2500, 5000, 5000);
-    
-    // --- КАМЕРА ---
     this.cameras.main.setBounds(-2500, -2500, 5000, 5000);
 
     // --- КРАТЕРЫ ---
@@ -137,10 +166,8 @@ function create() {
     for(let i = 0; i < 40; i++) {
         let cx = Phaser.Math.Between(-2000, 2000);
         let cy = Phaser.Math.Between(-2000, 2000);
-        // Не спавним кратер прямо на старте игрока
         if (Phaser.Math.Distance.Between(0, 0, cx, cy) > 300) {
             let crater = craters.create(cx, cy, 'crater');
-            // Чтобы физика круга работала четко
             crater.body.setCircle(35, 5, 5); 
         }
     }
@@ -148,21 +175,18 @@ function create() {
     // --- ИГРОК ---
     player = this.physics.add.sprite(0, 0, 'player');
     player.setCollideWorldBounds(true);
-    this.cameras.main.startFollow(player, true, 0.1, 0.1); // Камера следит за игроком
+    this.cameras.main.startFollow(player, true, 0.1, 0.1);
 
-    // Группы
     bullets = this.physics.add.group();
     enemies = this.physics.add.group();
     xpOrbs = this.physics.add.group();
 
-    // UI (фиксируем на экране)
+    // UI
     let uiContainer = this.add.container(0, 0).setScrollFactor(0).setDepth(100);
-    
     let uiBg = this.add.rectangle(400, 20, 800, 40, 0x000000).setOrigin(0.5).setAlpha(0.7);
     xpBar = this.add.rectangle(0, 20, 0, 20, 0xffff00).setOrigin(0, 0.5);
     levelText = this.add.text(10, 10, 'LVL: 1', { fontSize: '18px', fill: '#fff' });
     timeText = this.add.text(700, 10, '00:00', { fontSize: '18px', fill: '#fff' });
-    
     uiContainer.add([uiBg, xpBar, levelText, timeText]);
 
     for (let i = 0; i < 3; i++) {
@@ -174,7 +198,7 @@ function create() {
     cursors = this.input.keyboard.createCursorKeys();
     keys = this.input.keyboard.addKeys('W,A,S,D');
 
-    // Виртуальный джойстик
+    // Джойстик
     this.input.on('pointerdown', (pointer) => {
         if (pointer.x < 400 && !isPaused && !gameOver) {
             joystick.active = true;
@@ -188,8 +212,7 @@ function create() {
             joystick.curX = pointer.x; joystick.curY = pointer.y;
             let dist = Phaser.Math.Distance.Between(joystick.startX, joystick.startY, pointer.x, pointer.y);
             let angle = Phaser.Math.Angle.Between(joystick.startX, joystick.startY, pointer.x, pointer.y);
-            let maxDist = 40;
-            if (dist > maxDist) dist = maxDist;
+            if (dist > 40) dist = 40;
             joystick.thumb.x = joystick.startX + Math.cos(angle) * dist;
             joystick.thumb.y = joystick.startY + Math.sin(angle) * dist;
         }
@@ -204,19 +227,15 @@ function create() {
     this.physics.add.overlap(bullets, enemies, hitEnemy, null, this);
     this.physics.add.overlap(player, enemies, playerHit, null, this);
     this.physics.add.overlap(player, xpOrbs, collectXp, null, this);
-    
-    // Столкновения с кратерами (игрок и враги не проходят сквозь них)
     this.physics.add.collider(player, craters);
     this.physics.add.collider(enemies, craters);
 
-    // Таймер спавна
     spawnTimer = this.time.addEvent({ delay: spawnRate, callback: spawnEnemy, callbackScope: this, loop: true });
-}
+};
 
-function update(time, delta) {
+GameScene.prototype.update = function(time, delta) {
     if (gameOver || isPaused) return;
 
-    // Время и сложность
     gameTime += delta;
     timeText.setText(Math.floor(gameTime / 60000).toString().padStart(2, '0') + ':' + Math.floor((gameTime % 60000) / 1000).toString().padStart(2, '0'));
     
@@ -228,7 +247,6 @@ function update(time, delta) {
         spawnTimer.delay = spawnRate;
     }
 
-    // Движение
     let vx = 0, vy = 0;
     if (cursors.left.isDown || keys.A.isDown) vx = -1;
     if (cursors.right.isDown || keys.D.isDown) vx = 1;
@@ -247,20 +265,17 @@ function update(time, delta) {
         player.setVelocity(0);
     }
 
-    // Стрельба
     if (time > lastFired) {
         shoot(this);
         lastFired = time + fireRate;
     }
 
-    // Дрон
     if (hasDrone) {
         if (!drone) drone = this.add.circle(0, 0, 10, 0x00ffff);
         drone.setVisible(true);
         let droneAngle = time / 500;
         drone.x = player.x + Math.cos(droneAngle) * 50;
         drone.y = player.y + Math.sin(droneAngle) * 50;
-        
         if (time > lastDroneFired) { 
             shootFrom(this, drone.x, drone.y);
             lastDroneFired = time + droneFireRate;
@@ -269,16 +284,12 @@ function update(time, delta) {
         drone.setVisible(false);
     }
 
-    // Спутники (Орбитальное оружие)
     satellites.forEach((sat, index) => {
         let angle = (time / 1000) + (index * (Math.PI * 2 / satellites.length));
         sat.x = player.x + Math.cos(angle) * 70;
         sat.y = player.y + Math.sin(angle) * 70;
-        
-        // Урон при касании
         enemies.getChildren().forEach(enemy => {
             if (Phaser.Math.Distance.Between(sat.x, sat.y, enemy.x, enemy.y) < 30) {
-                // Наносим урон раз в секунду
                 if (!enemy.lastSatHit || time > enemy.lastSatHit + 1000) {
                     enemy.lastSatHit = time;
                     enemy.hp -= 1; 
@@ -294,7 +305,6 @@ function update(time, delta) {
         });
     });
 
-    // Метеорит
     if (hasMeteor) {
         meteorTimer += delta;
         if (meteorTimer > 3000) {
@@ -303,24 +313,18 @@ function update(time, delta) {
         }
     }
 
-    // Логика врагов
     enemies.getChildren().forEach(enemy => {
         if (enemy.active) {
             this.physics.moveToObject(enemy, player, enemy.speed);
         }
     });
 
-    // Сбор опыта (Магнит)
     xpOrbs.getChildren().forEach(xp => {
         if (Phaser.Math.Distance.Between(player.x, player.y, xp.x, xp.y) < pickupRadius) {
             this.physics.moveToObject(xp, player, 200);
         }
     });
-}
-
-// ... (Остальные функции стрельбы, коллизий и карточек остаются такими же, как в предыдущем коде, только добавлена выдача карточек для спутников и дрона) ...
-
-// (Для экономии места я не буду дублировать функции shoot, spawnEnemy, hitEnemy, playerHit и castMeteor, они остались без изменений)
+};
 
 function shoot(scene) {
     let target = getNearestEnemy(scene, player.x, player.y);
@@ -361,7 +365,6 @@ function spawnEnemy() {
     if (rand > 0.7 && gameTime > 20000) { type = 'enemy_flyer'; speed = 150; hp = 1; }
     else if (rand > 0.4 && gameTime > 40000) { type = 'enemy_tank'; speed = 50; hp = 3; }
 
-    // Спавним за пределами экрана камеры
     let cam = this.cameras.main;
     let x = Phaser.Math.Between(cam.worldView.x - 100, cam.worldView.right + 100);
     let y = Phaser.Math.Between(cam.worldView.y - 100, cam.worldView.bottom + 100);
@@ -396,14 +399,12 @@ function collectXp(player, xp) {
 
 function playerHit(player, enemy) {
     if (gameOver || isInvulnerable) return;
-    
     playerHealth--;
     hearts[playerHealth].setTint(0x000000); 
     isInvulnerable = true;
     
     let angle = Phaser.Math.Angle.Between(enemy.x, enemy.y, player.x, player.y);
     player.setVelocity(Math.cos(angle) * 400, Math.sin(angle) * 400);
-    
     this.tweens.add({ targets: player, alpha: 0.2, duration: 100, yoyo: true, repeat: 5 });
     
     if (playerHealth <= 0) {
@@ -426,17 +427,16 @@ function levelUp() {
     let overlay = this.add.rectangle(400, 300, 800, 600, 0x000000, 0.85).setScrollFactor(0).setDepth(200);
     let title = this.add.text(400, 80, 'УЛУЧШЕНИЕ', { fontSize: '40px', fill: '#00ffff' }).setOrigin(0.5).setScrollFactor(0).setDepth(200);
     
-    // Пул карточек с редкостью
     let pool = [
-        { title: 'УРОН', desc: '+1 к урону', color: 0x113355, action: () => bulletDamage += 1 }, // Синяя
+        { title: 'УРОН', desc: '+1 к урону', color: 0x113355, action: () => bulletDamage += 1 },
         { title: 'СКОРОСТЬ АТАКИ', desc: '-15% задержки', color: 0x113355, action: () => fireRate *= 0.85 },
-        { title: 'СКОРОСТЬ', desc: '+20 к скорости', color: 0x333333, action: () => moveSpeed += 20 }, // Серая
+        { title: 'СКОРОСТЬ', desc: '+20 к скорости', color: 0x333333, action: () => moveSpeed += 20 },
         { title: 'МАГНИТ', desc: 'Радиус сбора +50', color: 0x333333, action: () => pickupRadius += 50 },
         { title: 'ЛЕЧЕНИЕ', desc: 'Восстановить 1 HP', color: 0x333333, action: () => {
             if (playerHealth < 3) { playerHealth++; hearts[playerHealth-1].clearTint(); }
         }},
         { title: 'ДОП. ПУЛЯ', desc: 'Стреляем веером', color: 0x113355, action: () => bulletCount = Math.min(bulletCount + 1, 5) },
-        { title: 'МАКС. HP', desc: '+1 сердечко', color: 0x551155, action: () => { // Фиолетовая
+        { title: 'МАКС. HP', desc: '+1 сердечко', color: 0x551155, action: () => {
             if (playerHealth < 3) { playerHealth++; hearts[playerHealth-1].clearTint(); }
         }},
         { title: 'МЕТЕОРИТ', desc: 'Падает раз в 3 сек', color: 0x551155, action: () => hasMeteor = true },
@@ -451,7 +451,6 @@ function levelUp() {
 
     Phaser.Utils.Array.Shuffle(pool);
     let choices = pool.slice(0, 3);
-
     let elements = [overlay, title];
 
     choices.forEach((choice, index) => {
@@ -459,7 +458,6 @@ function levelUp() {
         let btnBg = this.add.rectangle(400, y, 500, 100, choice.color).setStrokeStyle(2, 0xffffff).setScrollFactor(0).setDepth(200);
         let btnTitle = this.add.text(400, y - 20, choice.title, { fontSize: '24px', fill: '#fff' }).setOrigin(0.5).setScrollFactor(0).setDepth(200);
         let btnDesc = this.add.text(400, y + 20, choice.desc, { fontSize: '18px', fill: '#aaa' }).setOrigin(0.5).setScrollFactor(0).setDepth(200);
-        
         let zone = this.add.zone(400, y, 500, 100).setInteractive().setScrollFactor(0).setDepth(200);
         
         zone.on('pointerover', () => btnBg.setFillStyle(0x44aaff));
@@ -471,7 +469,6 @@ function levelUp() {
             isPaused = false;
             this.physics.resume();
         });
-
         elements.push(btnBg, btnTitle, btnDesc, zone);
     });
 }
@@ -489,7 +486,6 @@ function castMeteor(scene) {
                 meteor.destroy();
                 let explosion = scene.add.circle(enemy.x, enemy.y, 50, 0xff5500, 0.6);
                 scene.time.delayedCall(200, () => explosion.destroy());
-
                 enemies.getChildren().forEach(e => {
                     if (Phaser.Math.Distance.Between(enemy.x, enemy.y, e.x, e.y) < 60) {
                         e.hp -= 2; 
