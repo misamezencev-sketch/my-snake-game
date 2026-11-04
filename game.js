@@ -11,7 +11,6 @@ const config = {
 
 const game = new Phaser.Game(config);
 
-// Переменная для хранения рекорда (в памяти, пока не подключим VK)
 let bestTime = 0; 
 
 // --- МЕНЮ ---
@@ -26,13 +25,10 @@ MenuScene.prototype.create = function() {
     this.add.image(400, 300, 'menu_bg');
 
     this.add.text(400, 150, 'КОСМИЧЕСКИЙ ВЫЖИВШИЙ', { fontSize: '40px', fill: '#00ffff', fontFamily: 'Arial', stroke: '#000', strokeThickness: 4 }).setOrigin(0.5);
-    
-    // Отображение рекорда
     this.add.text(400, 250, 'РЕКОРД: ' + Math.floor(bestTime / 1000) + ' СЕК', { fontSize: '24px', fill: '#ffff00' }).setOrigin(0.5);
 
     let playBtn = this.add.rectangle(400, 400, 300, 80, 0x113355).setStrokeStyle(3, 0x00ffff).setInteractive();
     this.add.text(400, 400, 'ИГРАТЬ', { fontSize: '36px', fill: '#ffffff' }).setOrigin(0.5);
-
     playBtn.on('pointerdown', () => this.scene.start('GameScene'));
 };
 
@@ -44,7 +40,7 @@ GameScene.prototype.constructor = GameScene;
 let player, bullets, enemies, xpOrbs, craters, coins, shops;
 let satellites = [], drone;
 let playerXp = 0, playerLevel = 1, xpToNextLevel = 100;
-let xpBar, levelText, hearts = [], playerHealth = 3;
+let xpBar, levelText, hearts = [], playerHealth = 3, maxHealth = 3; // Добавили maxHealth
 let playerCoins = 0, coinText;
 let isInvulnerable = false, gameOver = false, isPaused = false;
 let cursors, keys;
@@ -54,13 +50,12 @@ let lastFired = 0, lastDroneFired = 0, meteorTimer = 0;
 let gameTime = 0, timeText, difficultyTimer = 0, enemyHpMultiplier = 1, spawnRate = 1500, spawnTimer;
 let bossSpawnTimer = 0;
 let vampirismChance = 0;
-let slowEnemies = false;
 
 let currentWeapon = 'pistol';
 let ownedWeapons = { pistol: true, shotgun: false, rifle: false, rpg: false };
 let weaponStats = {
     pistol: { fireRate: 800, bulletCount: 1, spread: 0, damage: 1, color: 0x00ffff, speed: 600 },
-    shotgun: { fireRate: 1200, bulletCount: 3, spread: 0.15, damage: 0.7, color: 0xffaa00, speed: 500 }, // Уменьшен разброс
+    shotgun: { fireRate: 1200, bulletCount: 3, spread: 0.15, damage: 0.7, color: 0xffaa00, speed: 500 }, 
     rifle: { fireRate: 150, bulletCount: 1, spread: 0.05, damage: 0.8, color: 0xff00ff, speed: 800 },
     rpg: { fireRate: 2000, bulletCount: 1, spread: 0, damage: 3, color: 0xff0000, speed: 400 }
 };
@@ -69,10 +64,10 @@ let shopPhaseTimer = 0, shopOpen = false;
 let joystick = { active: false, startX: 0, startY: 0, curX: 0, curY: 0, base: null, thumb: null };
 
 GameScene.prototype.create = function() {
-    gameOver = false; isPaused = false; playerHealth = 3; hearts = []; playerXp = 0; playerLevel = 1; xpToNextLevel = 100; gameTime = 0; playerCoins = 0;
+    gameOver = false; isPaused = false; playerHealth = 3; maxHealth = 3; hearts = []; playerXp = 0; playerLevel = 1; xpToNextLevel = 100; gameTime = 0; playerCoins = 0;
     currentWeapon = 'pistol'; ownedWeapons = { pistol: true, shotgun: false, rifle: false, rpg: false };
     fireRate = weaponStats.pistol.fireRate; bulletDamage = weaponStats.pistol.damage; bulletCount = weaponStats.pistol.bulletCount;
-    hasMeteor = false; hasDrone = false; satellites = []; vampirismChance = 0; slowEnemies = false;
+    hasMeteor = false; hasDrone = false; satellites = []; vampirismChance = 0;
     enemyHpMultiplier = 1; spawnRate = 1500; bossSpawnTimer = 0; shopPhaseTimer = 0; shopOpen = false;
 
     let g = this.make.graphics({x: 0, y: 0, add: false});
@@ -88,11 +83,8 @@ GameScene.prototype.create = function() {
     g.fillStyle(0xff5500, 1); g.fillCircle(20, 20, 20); g.generateTexture('meteor', 40, 40); g.clear();
     g.fillStyle(0x1a1a1a, 1); g.fillCircle(40, 40, 40); g.lineStyle(4, 0x333333, 1); g.strokeCircle(40, 40, 40); g.generateTexture('crater', 80, 80); g.clear();
     g.fillStyle(0x00ffff, 1); g.fillCircle(10, 10, 10); g.generateTexture('satellite', 20, 20); g.clear();
-    
-    // ЯРКИЕ МАГАЗИНЫ
     g.fillStyle(0x555555, 1); g.fillRect(0, 0, 60, 60); g.fillStyle(0xff0000, 1); g.fillRect(0, 0, 60, 20); g.fillStyle(0x222222, 1); g.fillRect(10, 25, 40, 35); g.generateTexture('shop_closed', 60, 60); g.clear();
     g.fillStyle(0x555555, 1); g.fillRect(0, 0, 60, 60); g.fillStyle(0x00ff00, 1); g.fillRect(0, 0, 60, 20); g.fillStyle(0xffff00, 1); g.fillRect(10, 25, 40, 35); g.generateTexture('shop_open', 60, 60); g.clear();
-    
     g.fillStyle(0x333333, 1); g.fillRect(0, 0, 800, 600);
     for (let i = 0; i < 100; i++) { g.fillStyle(0x222222, Phaser.Math.FloatBetween(0.1, 0.5)); g.fillCircle(Phaser.Math.Between(0, 800), Phaser.Math.Between(0, 600), Phaser.Math.Between(5, 30)); }
     g.generateTexture('bg_tile', 800, 600); g.destroy();
@@ -126,7 +118,10 @@ GameScene.prototype.create = function() {
     coinText = this.add.text(680, 60, '🪙: 0', { fontSize: '24px', fill: '#ffff00' });
     ui.add([xpBar, levelText, timeText, coinText]);
 
-    for (let i = 0; i < 3; i++) hearts.push(this.add.image(30 + i * 30, 60, 'heart').setScrollFactor(0).setDepth(100));
+    // Создаем сердечки в зависимости от maxHealth
+    for (let i = 0; i < maxHealth; i++) {
+        hearts.push(this.add.image(30 + i * 30, 60, 'heart').setScrollFactor(0).setDepth(100));
+    }
 
     cursors = this.input.keyboard.createCursorKeys(); keys = this.input.keyboard.addKeys('W,A,S,D');
     this.input.on('pointerdown', (p) => {
@@ -207,7 +202,6 @@ function shoot(scene) {
     let angle = Phaser.Math.Angle.Between(player.x, player.y, target.x, target.y);
     let s = weaponStats[currentWeapon]; let count = s.bulletCount + (bulletCount - 1);
     let currentSpread = s.spread;
-    // Уменьшаем разброс для карточки "веер"
     if (bulletCount > 1 && s.spread === 0) currentSpread = 0.1; 
     
     for (let i = 0; i < count; i++) {
@@ -251,8 +245,7 @@ function killEnemy(scene, e) {
     e.destroy(); let xp = xpOrbs.create(e.x, e.y, 'star'); xp.setVelocity(Phaser.Math.Between(-50, 50), Phaser.Math.Between(-50, 50));
     if (Math.random() < 0.25) { let c = coins.create(e.x, e.y, 'coin'); c.setVelocity(Phaser.Math.Between(-50, 50), Phaser.Math.Between(-50, 50)); }
     
-    // Вампиризм
-    if (Math.random() < vampirismChance && playerHealth < 3) {
+    if (Math.random() < vampirismChance && playerHealth < maxHealth) {
         playerHealth++; hearts[playerHealth-1].clearTint();
     }
 
@@ -268,11 +261,11 @@ function playerHit(p, e) {
     
     if (playerHealth <= 0) { 
         gameOver = true; this.physics.pause(); p.setTint(0xff0000); 
-        if (gameTime > bestTime) bestTime = gameTime; // Обновляем рекорд
+        if (gameTime > bestTime) bestTime = gameTime; 
         
         this.add.text(400, 250, 'ИГРА ОКОНЧЕНА', { fontSize: '60px', fill: '#ff0000' }).setOrigin(0.5).setScrollFactor(0).setDepth(200);
         let restartBtn = this.add.text(400, 350, 'НАЧАТЬ ЗАНОВО', { fontSize: '30px', fill: '#fff', backgroundColor: '#333', padding: { x: 20, y: 10 } }).setOrigin(0.5).setInteractive().setScrollFactor(0).setDepth(200);
-        restartBtn.on('pointerdown', () => this.scene.start('MenuScene')); // Возврат в меню
+        restartBtn.on('pointerdown', () => this.scene.start('MenuScene')); 
     }
     else { this.time.delayedCall(1500, () => { isInvulnerable = false; p.alpha = 1; }); }
 }
@@ -313,33 +306,50 @@ function levelUp() {
     isPaused = true; this.physics.pause(); playerXp = 0; playerLevel++; xpToNextLevel += 50; xpBar.width = 0; levelText.setText('LVL: ' + playerLevel);
     let overlay = this.add.rectangle(400, 300, 800, 600, 0x000000, 0.85).setScrollFactor(0).setDepth(200);
     let title = this.add.text(400, 80, 'УЛУЧШЕНИЕ', { fontSize: '40px', fill: '#00ffff' }).setOrigin(0.5).setScrollFactor(0).setDepth(200);
+    
+    // ВАЖНО: В карточке макс. HP теперь добавляется новая иконка
     let pool = [
         { title: 'УРОН', desc: '+1 к урону', color: 0x113355, action: () => bulletDamage += 1 },
         { title: 'СКОРОСТЬ АТАКИ', desc: '-15% задержки', color: 0x113355, action: () => fireRate *= 0.85 },
         { title: 'СКОРОСТЬ', desc: '+20 к скорости', color: 0x333333, action: () => moveSpeed += 20 },
         { title: 'МАГНИТ', desc: 'Радиус сбора +50', color: 0x333333, action: () => pickupRadius += 50 },
-        { title: 'ЛЕЧЕНИЕ', desc: 'Восстановить 1 HP', color: 0x333333, action: () => { if (playerHealth < 3) { playerHealth++; hearts[playerHealth-1].clearTint(); } } },
+        { title: 'ЛЕЧЕНИЕ', desc: 'Восстановить 1 HP', color: 0x333333, action: () => { if (playerHealth < maxHealth) { playerHealth++; hearts[playerHealth-1].clearTint(); } } },
         { title: 'ДОП. ПУЛЯ', desc: 'Стреляем веером', color: 0x113355, action: () => bulletCount = Math.min(bulletCount + 1, 5) },
-        { title: 'МАКС. HP', desc: '+1 сердечко', color: 0x551155, action: () => { if (playerHealth < 3) { playerHealth++; hearts[playerHealth-1].clearTint(); } } },
+        { title: 'МАКС. HP', desc: '+1 сердечко', color: 0x551155, action: () => { 
+            maxHealth++; 
+            playerHealth = maxHealth; // Лечим до полного
+            // Добавляем новую иконку сердечка на экран
+            let newHeart = this.add.image(30 + (maxHealth - 1) * 30, 60, 'heart').setScrollFactor(0).setDepth(100);
+            hearts.push(newHeart);
+            // Восстанавливаем цвет всем сердечкам
+            hearts.forEach(h => h.clearTint());
+        } },
         { title: 'МЕТЕОРИТ', desc: 'Падает раз в 5 сек', color: 0x551155, action: () => hasMeteor = true },
         { title: 'ДРОН', desc: 'Летает и стреляет', color: 0x551155, action: () => hasDrone = true },
         { title: 'СПУТНИК', desc: 'Вращается и бьет', color: 0x551155, action: () => { if (satellites.length < 3) { let s = this.add.image(player.x, player.y, 'satellite').setDepth(10); satellites.push(s); } } },
         { title: 'ВАМПИРИЗМ', desc: '10% шанс лечения с врага', color: 0x551155, action: () => vampirismChance += 0.1 },
-        { title: 'ЗАМЕДЛЕНИЕ', desc: 'Враги на 10% медленнее', color: 0x551155, action:
-            () => { enemies.getChildren().forEach(e => e.speed *= 0.9); } }
+        { title: 'ЗАМЕДЛЕНИЕ', desc: 'Враги на 10% медленнее', color: 0x551155, action: () => { enemies.getChildren().forEach(e => e.speed *= 0.9); } }
     ];
 
     Phaser.Utils.Array.Shuffle(pool); let choices = pool.slice(0, 3); let elements = [overlay, title];
-    choices.forEach((c, i) => {
+       choices.forEach((c, i) => {
         let y = 200 + i * 130;
         let bg = this.add.rectangle(400, y, 500, 100, c.color).setStrokeStyle(2, 0xffffff).setScrollFactor(0).setDepth(200);
         let t1 = this.add.text(400, y - 20, c.title, { fontSize: '24px', fill: '#fff' }).setOrigin(0.5).setScrollFactor(0).setDepth(200);
         let t2 = this.add.text(400, y + 20, c.desc, { fontSize: '18px', fill: '#aaa' }).setOrigin(0.5).setScrollFactor(0).setDepth(200);
         let zone = this.add.zone(400, y, 500, 100).setInteractive().setScrollFactor(0).setDepth(200);
-        zone.on('pointerdown', () => { c.action.call(this); elements.forEach(e => e.destroy()); bg.destroy(); t1.destroy(); t2.destroy(); zone.destroy(); isPaused = false; this.physics.resume(); });
+        
+        zone.on('pointerdown', () => {
+            c.action.call(this);
+            elements.forEach(e => e.destroy());
+            bg.destroy(); t1.destroy(); t2.destroy(); zone.destroy();
+            isPaused = false;
+            this.physics.resume();
+        });
         elements.push(bg, t1, t2, zone);
     });
 }
+
 function castMeteor(scene) {
     let targets = enemies.getChildren(); if (targets.length === 0) return;
     Phaser.Utils.Array.Shuffle(targets).slice(0, 3).forEach(e => {
