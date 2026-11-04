@@ -367,4 +367,15 @@ function castMeteor(scene) {
     Phaser.Utils.Array.Shuffle(targets).slice(0, 3).forEach(e => {
         let m = scene.add.image(e.x, e.y - 300, 'meteor');
         scene.tweens.add({ targets: m, y: e.y, duration: 400, onComplete: () => {
-            m.destroy(); let exp = scene.add.circle(e.x, e.y, 50, 
+                      m.destroy(); 
+            let exp = scene.add.circle(e.x, e.y, 50, 0xff5500, 0.6); 
+            scene.time.delayedCall(200, () => exp.destroy());
+            enemies.getChildren().forEach(en => { 
+                if (Phaser.Math.Distance.Between(e.x, e.y, en.x, en.y) < 60) { 
+                    en.hp -= 2; 
+                    if (en.hp <= 0) killEnemy(scene, en); 
+                } 
+            });
+        }});
+    });
+}
