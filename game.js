@@ -1,15 +1,18 @@
-// 1. Настройка игры
+// 1. Настройка игры (на весь экран)
 const config = {
     type: Phaser.AUTO,
-    width: 800,
-    height: 600,
-    parent: 'game',
+    scale: {
+        mode: Phaser.Scale.RESIZE, // Игра подстраивается под экран
+        parent: 'game',
+        width: '100%',
+        height: '100%'
+    },
     backgroundColor: '#050510',
     physics: {
         default: 'arcade',
         arcade: { gravity: { y: 0 }, debug: false }
     },
-    scene: [MenuScene, GameScene] // Две сцены: Меню и Игра
+    scene: [MenuScene, GameScene] 
 };
 
 const game = new Phaser.Game(config);
@@ -24,25 +27,27 @@ MenuScene.prototype = Object.create(Phaser.Scene.prototype);
 MenuScene.prototype.constructor = MenuScene;
 
 MenuScene.prototype.create = function() {
-    // Фон меню (просто темный цвет со звездами)
+    let width = this.scale.width;
+    let height = this.scale.height;
+
+    // Фон меню (звезды)
     let graphics = this.make.graphics({x: 0, y: 0, add: false});
-    for (let i = 0; i < 100; i++) {
+    for (let i = 0; i < 200; i++) {
         let size = Phaser.Math.Between(1, 3);
         graphics.fillStyle(0xffffff, Phaser.Math.FloatBetween(0.1, 0.8));
-        graphics.fillCircle(Phaser.Math.Between(0, 800), Phaser.Math.Between(0, 600), size);
+        graphics.fillCircle(Phaser.Math.Between(0, width), Phaser.Math.Between(0, height), size);
     }
-    graphics.generateTexture('menu_bg', 800, 600);
-    
-    this.add.image(400, 300, 'menu_bg');
+    graphics.generateTexture('menu_bg', width, height);
+    this.add.image(width/2, height/2, 'menu_bg');
 
     // Заголовок
-    this.add.text(400, 150, 'КОСМИЧЕСКИЙ ВЫЖИВШИЙ', { 
+    this.add.text(width/2, height/3, 'КОСМИЧЕСКИЙ ВЫЖИВШИЙ', { 
         fontSize: '48px', fill: '#00ffff', fontFamily: 'Arial', fontWeight: 'bold'
     }).setOrigin(0.5);
 
     // Кнопка Играть
-    let playBtn = this.add.rectangle(400, 400, 300, 80, 0x113355).setStrokeStyle(3, 0x00ffff).setInteractive();
-    this.add.text(400, 400, 'ИГРАТЬ', { fontSize: '36px', fill: '#ffffff' }).setOrigin(0.5);
+    let playBtn = this.add.rectangle(width/2, height/2 + 100, 300, 80, 0x113355).setStrokeStyle(3, 0x00ffff).setInteractive();
+    this.add.text(width/2, height/2 + 100, 'ИГРАТЬ', { fontSize: '36px', fill: '#ffffff' }).setOrigin(0.5);
 
     playBtn.on('pointerover', () => playBtn.setFillStyle(0x225588));
     playBtn.on('pointerout', () => playBtn.setFillStyle(0x113355));
@@ -60,55 +65,23 @@ function GameScene() {
 GameScene.prototype = Object.create(Phaser.Scene.prototype);
 GameScene.prototype.constructor = GameScene;
 
-// Глобальные переменные игры
-let player;
-let bullets;
-let enemies;
-let xpOrbs;
-let craters;
-let satellites = [];
-let drone;
-
-let playerXp = 0;
-let playerLevel = 1;
-let xpToNextLevel = 100;
-let xpBar;
-let levelText;
-let hearts = [];
-let playerHealth = 3;
-let isInvulnerable = false;
-let gameOver = false;
-let isPaused = false;
-let cursors;
-let keys;
-
-let fireRate = 800; 
-let bulletDamage = 1;
-let moveSpeed = 250;
-let bulletCount = 1;
-let pickupRadius = 100;
-let hasMeteor = false;
-let hasDrone = false;
-let droneFireRate = 1000;
-let lastFired = 0;
-let lastDroneFired = 0;
-let meteorTimer = 0;
-
-let gameTime = 0;
-let timeText;
-let difficultyTimer = 0;
-let enemyHpMultiplier = 1;
-let spawnRate = 1500;
-let spawnTimer;
-
+// Глобальные переменные
+let player, bullets, enemies, xpOrbs, craters;
+let satellites = [], drone;
+let playerXp = 0, playerLevel = 1, xpToNextLevel = 100;
+let xpBar, levelText, hearts = [], playerHealth = 3;
+let isInvulnerable = false, gameOver = false, isPaused = false;
+let cursors, keys;
+let fireRate = 800, bulletDamage = 1, moveSpeed = 250, bulletCount = 1, pickupRadius = 100;
+let hasMeteor = false, hasDrone = false, droneFireRate = 1000;
+let lastFired = 0, lastDroneFired = 0, meteorTimer = 0;
+let gameTime = 0, timeText, difficultyTimer = 0, enemyHpMultiplier = 1, spawnRate = 1500, spawnTimer;
 let joystick = { active: false, startX: 0, startY: 0, curX: 0, curY: 0, base: null, thumb: null };
 
-GameScene.prototype.preload = function() {
-    // Загружаем картинку для меню (если она есть в репозитории)
-    this.load.image('menu_bg_img', 'bg.png');
-};
-
 GameScene.prototype.create = function() {
+    let w = this.scale.width;
+    let h = this.scale.height;
+
     // Сброс переменных
     gameOver = false; isPaused = false; playerHealth = 3; hearts = [];
     playerXp = 0; playerLevel = 1; xpToNextLevel = 100; gameTime = 0;
@@ -148,13 +121,15 @@ GameScene.prototype.create = function() {
     graphics.fillStyle(0x00ffff, 1); graphics.fillCircle(10, 10, 10);
     graphics.generateTexture('satellite', 20, 20);
 
-    // Фон (Звезды)
+    // Фон
+    graphics.fillStyle(0x000000, 1);
+    graphics.fillRect(0, 0, w, h);
     for (let i = 0; i < 150; i++) {
         let size = Phaser.Math.Between(1, 3);
         graphics.fillStyle(0xffffff, Phaser.Math.FloatBetween(0.1, 0.8));
-        graphics.fillCircle(Phaser.Math.Between(0, 800), Phaser.Math.Between(0, 600), size);
+        graphics.fillCircle(Phaser.Math.Between(0, w), Phaser.Math.Between(0, h), size);
     }
-    graphics.generateTexture('bg_tile', 800, 600);
+    graphics.generateTexture('bg_tile', w, h);
 
     // --- МИР И КАМЕРА ---
     this.add.tileSprite(-2500, -2500, 5000, 5000, 'bg_tile').setOrigin(0);
@@ -181,17 +156,18 @@ GameScene.prototype.create = function() {
     enemies = this.physics.add.group();
     xpOrbs = this.physics.add.group();
 
-    // UI
+    // UI (фиксируем на экране)
     let uiContainer = this.add.container(0, 0).setScrollFactor(0).setDepth(100);
-    let uiBg = this.add.rectangle(400, 20, 800, 40, 0x000000).setOrigin(0.5).setAlpha(0.7);
+    // Полоска опыта сверху на весь экран
+    let uiBg = this.add.rectangle(w/2, 20, w, 40, 0x000000).setOrigin(0.5).setAlpha(0.7);
     xpBar = this.add.rectangle(0, 20, 0, 20, 0xffff00).setOrigin(0, 0.5);
     levelText = this.add.text(10, 10, 'LVL: 1', { fontSize: '18px', fill: '#fff' });
-    timeText = this.add.text(700, 10, '00:00', { fontSize: '18px', fill: '#fff' });
+    timeText = this.add.text(w - 80, 10, '00:00', { fontSize: '18px', fill: '#fff' });
     uiContainer.add([uiBg, xpBar, levelText, timeText]);
 
     for (let i = 0; i < 3; i++) {
-        let h = this.add.image(30 + i * 30, 60, 'heart').setScrollFactor(0).setDepth(100);
-        hearts.push(h);
+        let heart = this.add.image(30 + i * 30, 60, 'heart').setScrollFactor(0).setDepth(100);
+        hearts.push(heart);
     }
 
     // Управление
@@ -200,7 +176,7 @@ GameScene.prototype.create = function() {
 
     // Джойстик
     this.input.on('pointerdown', (pointer) => {
-        if (pointer.x < 400 && !isPaused && !gameOver) {
+        if (pointer.x < w/2 && !isPaused && !gameOver) { // Джойстик только на левой половине экрана
             joystick.active = true;
             joystick.startX = pointer.x; joystick.startY = pointer.y;
             joystick.base = this.add.circle(pointer.x, pointer.y, 40, 0xffffff, 0.2).setScrollFactor(0).setDepth(100);
@@ -391,7 +367,7 @@ function hitEnemy(bullet, enemy) {
 function collectXp(player, xp) {
     xp.destroy();
     playerXp += 15;
-    xpBar.width = (playerXp / xpToNextLevel) * 800;
+    xpBar.width = (playerXp / xpToNextLevel) * this.scale.width; // Адаптация под ширину экрана
     if (playerXp >= xpToNextLevel) {
         levelUp.call(this);
     }
@@ -411,7 +387,7 @@ function playerHit(player, enemy) {
         gameOver = true;
         this.physics.pause();
         player.setTint(0xff0000);
-        this.add.text(400, 300, 'ИГРА ОКОНЧЕНА', { fontSize: '60px', fill: '#ff0000' }).setOrigin(0.5).setScrollFactor(0).setDepth(200);
+        this.add.text(this.scale.width/2, this.scale.height/2, 'ИГРА ОКОНЧЕНА', { fontSize: '60px', fill: '#ff0000' }).setOrigin(0.5).setScrollFactor(0).setDepth(200);
     } else {
         this.time.delayedCall(1500, () => { isInvulnerable = false; player.alpha = 1; });
     }
@@ -424,8 +400,11 @@ function levelUp() {
     xpBar.width = 0;
     levelText.setText('LVL: ' + playerLevel);
 
-    let overlay = this.add.rectangle(400, 300, 800, 600, 0x000000, 0.85).setScrollFactor(0).setDepth(200);
-    let title = this.add.text(400, 80, 'УЛУЧШЕНИЕ', { fontSize: '40px', fill: '#00ffff' }).setOrigin(0.5).setScrollFactor(0).setDepth(200);
+    let w = this.scale.width;
+    let h = this.scale.height;
+
+    let overlay = this.add.rectangle(w/2, h/2, w, h, 0x000000, 0.85).setScrollFactor(0).setDepth(200);
+    let title = this.add.text(w/2, 80, 'УЛУЧШЕНИЕ', { fontSize: '40px', fill: '#00ffff' }).setOrigin(0.5).setScrollFactor(0).setDepth(200);
     
     let pool = [
         { title: 'УРОН', desc: '+1 к урону', color: 0x113355, action: () => bulletDamage += 1 },
@@ -454,11 +433,11 @@ function levelUp() {
     let elements = [overlay, title];
 
     choices.forEach((choice, index) => {
-        let y = 200 + index * 130;
-        let btnBg = this.add.rectangle(400, y, 500, 100, choice.color).setStrokeStyle(2, 0xffffff).setScrollFactor(0).setDepth(200);
-        let btnTitle = this.add.text(400, y - 20, choice.title, { fontSize: '24px', fill: '#fff' }).setOrigin(0.5).setScrollFactor(0).setDepth(200);
-        let btnDesc = this.add.text(400, y + 20, choice.desc, { fontSize: '18px', fill: '#aaa' }).setOrigin(0.5).setScrollFactor(0).setDepth(200);
-        let zone = this.add.zone(400, y, 500, 100).setInteractive().setScrollFactor(0).setDepth(200);
+        let y = h/2 - 100 + index * 130; // Центрируем карточки по вертикали
+        let btnBg = this.add.rectangle(w/2, y, 500, 100, choice.color).setStrokeStyle(2, 0xffffff).setScrollFactor(0).setDepth(200);
+        let btnTitle = this.add.text(w/2, y - 20, choice.title, { fontSize: '24px', fill: '#fff' }).setOrigin(0.5).setScrollFactor(0).setDepth(200);
+        let btnDesc = this.add.text(w/2, y + 20, choice.desc, { fontSize: '18px', fill: '#aaa' }).setOrigin(0.5).setScrollFactor(0).setDepth(200);
+        let zone = this.add.zone(w/2, y, 500, 100).setInteractive().setScrollFactor(0).setDepth(200);
         
         zone.on('pointerover', () => btnBg.setFillStyle(0x44aaff));
         zone.on('pointerout', () => btnBg.setFillStyle(choice.color));
