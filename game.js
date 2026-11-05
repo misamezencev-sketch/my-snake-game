@@ -53,8 +53,15 @@ BeachScene.prototype.create = function() {
     g.fillRect(0, 0, 32, 32);
     g.generateTexture('player', 32, 32);
 
-    this.player = this.physics.add.sprite(400, 400, 'player'); // Ставим на песок
+      this.player = this.physics.add.sprite(400, 400, 'player'); 
     this.player.setCollideWorldBounds(true);
+
+    // Создаем невидимую стену на границе песка и воды
+    this.wall = this.add.rectangle(1280, 896, 2560, 32, 0xff0000, 0); 
+    this.physics.add.existing(this.wall, true); 
+
+    // ВОТ ЭТА СТРОЧКА ЗАСТАВЛЯЕТ ИГРОКА УПИРАТЬСЯ В СТЕНУ:
+    this.physics.add.collider(this.player, this.wall);
 
     // 3. Границы мира
     this.physics.world.setBounds(0, 0, cols * tileSize, rows * tileSize);
@@ -64,7 +71,6 @@ BeachScene.prototype.create = function() {
     this.cameras.main.startFollow(this.player, true, 0.1, 0.1);
     this.cameras.main.setZoom(0.5); // <--- Отдаляем камеру (0.7 = 70% от стандартного)
     // Убираем зум, чтобы видеть тайлы в нормальном размере
-    this.cameras.main.setZoom(1); 
 
     // 5. Управление
     this.cursors = this.input.keyboard.createCursorKeys();
