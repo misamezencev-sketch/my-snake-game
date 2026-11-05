@@ -19,7 +19,7 @@ BeachScene.prototype.preload = function() {
     // Загружаем тайлы карты
     this.load.spritesheet('tiles', 'assets/beach.png', { frameWidth: 128, frameHeight: 128 });
     // Загружаем персонажа. Размер кадра 64x64 (если съедет - попробуй 128 или 32)
-    this.load.spritesheet('player_sheet', 'assets/player.png', { frameWidth: 64, frameHeight: 64 });
+    this.load.spritesheet('player_sheet', 'assets/player.png', { frameWidth: 400, frameHeight: 400 });
 };
 
 BeachScene.prototype.create = function() {
