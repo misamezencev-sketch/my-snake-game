@@ -3,7 +3,7 @@ const config = {
     width: 800,
     height: 600,
     parent: 'game',
-    backgroundColor: '#87CEEB',
+    backgroundColor: '#000000',
     scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
     scene: [BeachScene]
 };
@@ -15,44 +15,30 @@ BeachScene.prototype = Object.create(Phaser.Scene.prototype);
 BeachScene.prototype.constructor = BeachScene;
 
 BeachScene.prototype.preload = function() {
-    // УВЕЛИЧИЛИ РАЗМЕР ДО 128! 
-    // Если не сработает, попробуй 64.
+    // Размер 128, как мы выяснили
     this.load.spritesheet('tiles', 'beach.png', { frameWidth: 128, frameHeight: 128 });
 };
 
 BeachScene.prototype.create = function() {
-    // Мы не будем растягивать на весь экран, а сделаем красивый уголок пляжа
-    // 4 тайла в ширину и 3 в высоту (4*128 = 512, 3*128 = 384)
-    let startX = 150;
-    let startY = 100;
-    let tileSize = 128;
-
-    // Ручная расстановка тайлов для красивого берега:
-    // Сверху - чистый песок, посередине - пена (переход), снизу - чистая вода.
+    // Выведем первые 30 тайлов сеткой
+    let tileSize = 64; // Рисуем их поменьше (64), чтобы влезло больше
+    let cols = 8; // 8 тайлов в ряд
     
-    // 1. Верхний ряд (Песок). 
-    // Судя по твоему файлу, чистый песок - это где-то в нижней части картинки (индексы 50+).
-    // Пока ставим 50 (если это не он, мы подберем).
-    this.add.image(startX + 0 * tileSize, startY + 0 * tileSize, 'tiles', 50).setOrigin(0);
-    this.add.image(startX + 1 * tileSize, startY + 0 * tileSize, 'tiles', 50).setOrigin(0);
-    this.add.image(startX + 2 * tileSize, startY + 0 * tileSize, 'tiles', 50).setOrigin(0);
-    this.add.image(startX + 3 * tileSize, startY + 0 * tileSize, 'tiles', 50).setOrigin(0);
-
-    // 2. Средний ряд (Пена/Переход).
-    // Берем тайл с пеной. В твоем наборе это где-то в районе 20-30.
-    this.add.image(startX + 0 * tileSize, startY + 1 * tileSize, 'tiles', 20).setOrigin(0);
-    this.add.image(startX + 1 * tileSize, startY + 1 * tileSize, 'tiles', 20).setOrigin(0);
-    this.add.image(startX + 2 * tileSize, startY + 1 * tileSize, 'tiles', 20).setOrigin(0);
-    this.add.image(startX + 3 * tileSize, startY + 1 * tileSize, 'tiles', 20).setOrigin(0);
-
-    // 3. Нижний ряд (Вода).
-    // Чистая вода в твоем файле - это правый верхний угол (индексы 4, 5...).
-    this.add.image(startX + 0 * tileSize, startY + 2 * tileSize, 'tiles', 4).setOrigin(0);
-    this.add.image(startX + 1 * tileSize, startY + 2 * tileSize, 'tiles', 4).setOrigin(0);
-    this.add.image(startX + 2 * tileSize, startY + 2 * tileSize, 'tiles', 4).setOrigin(0);
-    this.add.image(startX + 3 * tileSize, startY + 2 * tileSize, 'tiles', 4).setOrigin(0);
-
-    this.add.text(400, 550, 'ЭТО НАСТОЯЩИЙ ПЛЯЖ!', { 
-        fontFamily: 'Arial', fontSize: '24px', fill: '#000', backgroundColor: '#fff' 
+    for (let i = 0; i < 30; i++) {
+        let x = (i % cols) * (tileSize + 10) + 50;
+        let y = Math.floor(i / cols) * (tileSize + 10) + 50;
+        
+        // Выводим тайл (уменьшенный)
+        let t = this.add.image(x, y, 'tiles', i).setOrigin(0);
+        t.setDisplaySize(tileSize, tileSize); // Уменьшаем до 64x64 для отображения
+        
+        // Пишем номер сверху
+        this.add.text(x + 2, y + 2, i.toString(), { 
+            fontFamily: 'Arial', fontSize: '16px', fill: '#ff0000', backgroundColor: '#ffffff' 
+        }).setOrigin(0);
+    }
+    
+    this.add.text(400, 560, 'СКАЖИ НОМЕРА: ПЕСОК, ПЕНА, ВОДА', { 
+        fontFamily: 'Arial', fontSize: '20px', fill: '#fff', backgroundColor: '#000' 
     }).setOrigin(0.5);
 };
