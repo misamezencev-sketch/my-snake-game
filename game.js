@@ -16,7 +16,7 @@ BeachScene.prototype = Object.create(Phaser.Scene.prototype);
 BeachScene.prototype.constructor = BeachScene;
 
 BeachScene.prototype.preload = function() {
-    this.load.spritesheet('tiles', 'beach.png', { frameWidth: 128, frameHeight: 128 });
+  this.load.spritesheet('tiles', 'assets/beach.png', { frameWidth: 128, frameHeight: 128 });
 };
 
 BeachScene.prototype.create = function() {
