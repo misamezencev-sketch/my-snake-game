@@ -16,10 +16,9 @@ BeachScene.prototype = Object.create(Phaser.Scene.prototype);
 BeachScene.prototype.constructor = BeachScene;
 
 BeachScene.prototype.preload = function() {
-    // Загружаем тайлы карты
     this.load.spritesheet('tiles', 'assets/beach.png', { frameWidth: 128, frameHeight: 128 });
-    // Загружаем персонажа. Размер кадра 64x64 (если съедет - попробуй 128 или 32)
-    this.load.spritesheet('player_sheet', 'assets/player.png', { frameWidth: 400, frameHeight: 400 });
+    // Ставим 256x256. Если картинка не нарежется, попробуй 128.
+    this.load.spritesheet('player_sheet', 'assets/player.png', { frameWidth: 256, frameHeight: 256 });
 };
 
 BeachScene.prototype.create = function() {
@@ -47,47 +46,53 @@ BeachScene.prototype.create = function() {
         }
     }
 
-    // 2. Создаем анимации для персонажа
-    this.anims.create({
-        key: 'idle',
-        frames: this.anims.generateFrameNumbers('player_sheet', { start: 0, end: 3 }),
-        frameRate: 6,
-        repeat: -1
-    });
+    // 2. Создаем анимации (только если спрайт загрузился)
+    if (this.textures.exists('player_sheet')) {
+        this.anims.create({
+            key: 'idle',
+            frames: this.anims.generateFrameNumbers('player_sheet', { start: 0, end: 3 }),
+            frameRate: 6,
+            repeat: -1
+        });
 
-    this.anims.create({
-        key: 'walk',
-        frames: this.anims.generateFrameNumbers('player_sheet', { start: 4, end: 7 }),
-        frameRate: 10,
-        repeat: -1
-    });
+        this.anims.create({
+            key: 'walk',
+            frames: this.anims.generateFrameNumbers('player_sheet', { start: 4, end: 7 }),
+            frameRate: 10,
+            repeat: -1
+        });
+    }
 
     // 3. Создаем игрока
     this.player = this.physics.add.sprite(400, 400, 'player_sheet');
-    this.player.setScale(1.5); // Увеличиваем масштаб (можно поменять)
+    this.player.setScale(0.2); // Уменьшаем, чтобы не был гигантским
     this.player.setCollideWorldBounds(true);
-    this.player.play('idle'); // Включаем анимацию покоя
+    
+    // Включаем анимацию только если она создалась
+    if (this.anims.exists('idle')) {
+        this.player.play('idle');
+    }
 
-    // Делаем хитбокс меньше, чтобы он не застревал в стене
-    this.player.body.setSize(30, 30);
-    this.player.body.setOffset(17, 30);
+    // Хитбокс
+    this.player.body.setSize(100, 100);
+    this.player.body.setOffset(78, 120);
 
-    // 4. Невидимая стена у воды (чтобы нельзя было зайти)
+    // 4. Стена
     this.wall = this.add.rectangle(1280, 1010, 2560, 32, 0xff0000, 0); 
     this.physics.add.existing(this.wall, true); 
     this.physics.add.collider(this.player, this.wall);
 
-    // 5. Границы мира и камера
+    // 5. Камера и границы
     this.physics.world.setBounds(0, 0, cols * tileSize, rows * tileSize);
     this.cameras.main.setBounds(0, 0, cols * tileSize, rows * tileSize);
     this.cameras.main.startFollow(this.player, true, 0.1, 0.1);
-    this.cameras.main.setZoom(0.7); // Отдаляем камеру
+    this.cameras.main.setZoom(0.7); 
 
     // 6. Управление
     this.cursors = this.input.keyboard.createCursorKeys();
     this.keys = this.input.keyboard.addKeys('W,A,S,D');
 
-    // 7. Подсказка
+    // 7. Текст
     this.add.text(400, 550, 'WASD - ДВИЖЕНИЕ', { 
         fontFamily: 'Arial', fontSize: '24px', fill: '#000', backgroundColor: '#fff' 
     }).setOrigin(0.5).setScrollFactor(0);
@@ -99,7 +104,6 @@ BeachScene.prototype.update = function() {
     this.player.setVelocity(0);
     let isMoving = false;
 
-    // Движение и поворот
     if (this.cursors.left.isDown || this.keys.A.isDown) { 
         this.player.setVelocityX(-speed); 
         this.player.setFlipX(true); 
@@ -119,10 +123,14 @@ BeachScene.prototype.update = function() {
         isMoving = true; 
     }
 
-    // Переключение анимаций
+    // Переключение анимаций (с проверкой, что они существуют)
     if (isMoving) {
-        if (this.player.anims.currentAnim.key !== 'walk') this.player.play('walk');
+        if (this.anims.exists('walk') && this.player.anims.currentAnim && this.player.anims.currentAnim.key !== 'walk') {
+            this.player.play('walk');
+        }
     } else {
-        if (this.player.anims.currentAnim.key !== 'idle') this.player.play('idle');
+        if (this.anims.exists('idle') && this.player.anims.currentAnim && this.player.anims.currentAnim.key !== 'idle') {
+            this.player.play('idle');
+        }
     }
 };
