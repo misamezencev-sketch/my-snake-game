@@ -16,7 +16,7 @@ BeachScene.prototype.constructor = BeachScene;
 
 BeachScene.prototype.preload = function() {
     // Загружаем тайлсет. Говорим, что один кусочек = 16x16 пикселей.
-    this.load.spritesheet('tiles', 'beach.png', { frameWidth: 16, frameHeight: 16 });
+    this.load.spritesheet('tiles', 'beach.png', { frameWidth: 32, frameHeight: 32 });
 };
 
 BeachScene.prototype.create = function() {
