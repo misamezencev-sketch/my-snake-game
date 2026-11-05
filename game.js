@@ -3,7 +3,7 @@ const config = {
     width: 800,
     height: 600,
     parent: 'game',
-    backgroundColor: '#87CEEB', // Небо
+    backgroundColor: '#87CEEB',
     scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
     scene: [BeachScene]
 };
@@ -15,51 +15,49 @@ BeachScene.prototype = Object.create(Phaser.Scene.prototype);
 BeachScene.prototype.constructor = BeachScene;
 
 BeachScene.prototype.preload = function() {
-    // Размер 128 подтвержден
     this.load.spritesheet('tiles', 'beach.png', { frameWidth: 128, frameHeight: 128 });
 };
 
 BeachScene.prototype.create = function() {
     let tileSize = 128;
-    let startX = 64; // Отступ слева
-    let startY = 0;  // Начинаем с самого верха
+    // Смещаем карту чуть выше, чтобы освободить место для UI
+    let startX = -128; // Начнем чуть левее, чтобы заполнить экран
+    let startY = -128; 
 
-    // У нас 800 пикселей в ширину. Один тайл 128. Значит, влезет 6 тайлов (6*128 = 768). 
-    // Остаток 32 пикселя оставим как отступ.
-    
-    let cols = 6;
-    let rows = 4; // 4 ряда по 128 = 512 пикселей в высоту. Остальное будет небо.
+    // Делаем карту больше: 8 тайлов в ширину и 5 в высоту (8*128 = 1024, 5*128 = 640)
+    // Это больше экрана, так что будет ощущение простора.
+    let cols = 8;
+    let rows = 5; 
 
     for (let y = 0; y < rows; y++) {
         for (let x = 0; x < cols; x++) {
-            let tileIndex = 20; // По умолчанию - чистый песок
+            let tileIndex = 20; // Песок по умолчанию
+            let flipY = false; // Нужно ли переворачивать тайл
 
-            // 1. Верхний ряд (y=0) - Чистый песок
-            if (y === 0) {
+            // Верхние 2 ряда (y=0, y=1) - Чистый песок
+            if (y < 2) {
                 tileIndex = 20; 
             }
-            // 2. Второй ряд (y=1) - Переход (Пена)
-            else if (y === 1) {
-                // Берем тайл с пеной, который ровный (например, 3)
-                tileIndex = 3; 
-            }
-            // 3. Третий ряд (y=2) - Еще немного пены (чтобы волна была толще)
+            // 3-й ряд (y=2) - Переход (Пена), но перевернутый вниз
             else if (y === 2) {
-                // Берем тайл с водой и пеной (например, 12)
-                tileIndex = 12; 
+                tileIndex = 3; // Берем тайл с пеной
+                flipY = true;  // ПЕРЕВОРАЧИВАЕМ его, чтобы пена смотрела вниз!
             }
-            // 4. Четвертый ряд (y=3) - Чистая вода
+            // Остальные ряды (y=3, y=4) - Чистая вода
             else {
                 tileIndex = 26; 
             }
 
             // Добавляем тайл на сцену
-            this.add.image(startX + x * tileSize, startY + y * tileSize, 'tiles', tileIndex).setOrigin(0);
+            let tile = this.add.image(startX + x * tileSize, startY + y * tileSize, 'tiles', tileIndex).setOrigin(0);
+            
+            if (flipY) {
+                tile.setFlipY(true); // Переворачиваем по вертикали
+            }
         }
     }
     
-    // Добавим красивую надпись на "небе"
-    this.add.text(400, 550, 'БЕРЕГ ГОТОВ! ТЕПЕРЬ ДОБАВИМ ПИРС', { 
+    this.add.text(400, 550, 'КАРТА СТАЛА БОЛЬШЕ! ПЕНА ПРАВИЛЬНО', { 
         fontFamily: 'Arial', fontSize: '24px', fill: '#000', backgroundColor: '#fff' 
     }).setOrigin(0.5);
 };
