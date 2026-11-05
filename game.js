@@ -62,6 +62,7 @@ BeachScene.prototype.create = function() {
     // 4. Камера следит за игроком
     this.cameras.main.setBounds(0, 0, cols * tileSize, rows * tileSize);
     this.cameras.main.startFollow(this.player, true, 0.1, 0.1);
+    this.cameras.main.setZoom(0.5); // <--- Отдаляем камеру (0.7 = 70% от стандартного)
     // Убираем зум, чтобы видеть тайлы в нормальном размере
     this.cameras.main.setZoom(1); 
 
