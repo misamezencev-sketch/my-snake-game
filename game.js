@@ -22,7 +22,7 @@ BootScene.prototype.create = function() {
     let g = this.make.graphics({x: 0, y: 0, add: false});
     let p = 4;
 
-    // Космонавты (Ранец слева)
+    // Космонавты (Ранец всегда слева)
     g.clear(); g.fillStyle(0xffffff, 1); g.fillRect(2*p, 2*p, 4*p, 2*p); g.fillRect(1*p, 4*p, 6*p, 4*p); g.fillRect(2*p, 8*p, 4*p, 4*p); g.fillRect(1*p, 8*p, 1*p, 4*p); g.fillRect(6*p, 8*p, 1*p, 4*p); g.fillRect(2*p, 12*p, 1*p, 2*p); g.fillRect(5*p, 12*p, 1*p, 2*p); g.fillStyle(0x1a1a3a, 1); g.fillRect(2*p, 4*p, 4*p, 4*p); g.fillStyle(0xccccff, 1); g.fillRect(2*p, 4*p, 2*p, 2*p); g.fillStyle(0xff0000, 1); g.fillRect(2*p, 9*p, 1*p, 1*p); g.fillStyle(0x00ffff, 1); g.fillRect(3*p, 9*p, 1*p, 1*p); g.fillStyle(0x555555, 1); g.fillRect(0*p, 6*p, 1*p, 6*p); g.generateTexture('player_classic', 8*p, 16*p);
 
     g.clear(); g.fillStyle(0xff5500, 1); g.fillRect(1*p, 1*p, 6*p, 2*p); g.fillRect(0*p, 3*p, 8*p, 5*p); g.fillRect(1*p, 8*p, 6*p, 4*p); g.fillRect(0*p, 8*p, 1*p, 4*p); g.fillRect(7*p, 8*p, 1*p, 4*p); g.fillRect(1*p, 12*p, 2*p, 3*p); g.fillRect(5*p, 12*p, 2*p, 3*p); g.fillStyle(0x222222, 1); g.fillRect(2*p, 3*p, 4*p, 3*p); g.fillStyle(0xffff00, 1); g.fillRect(2*p, 9*p, 1*p, 1*p); g.fillRect(4*p, 9*p, 1*p, 1*p); g.fillStyle(0x333333, 1); g.fillRect(0*p, 5*p, 2*p, 6*p); g.generateTexture('player_heavy', 8*p, 16*p);
@@ -31,14 +31,23 @@ BootScene.prototype.create = function() {
 
     g.clear(); g.fillStyle(0xff8800, 1); g.fillCircle(3, 3, 3); g.generateTexture('flame', 6, 6);
 
-    // Враги
+    // Пришельцы
     g.clear(); g.fillStyle(0x00ff00, 1); g.fillRect(2*p, 1*p, 4*p, 2*p); g.fillRect(1*p, 3*p, 6*p, 3*p); g.fillRect(0*p, 4*p, 1*p, 1*p); g.fillRect(7*p, 4*p, 1*p, 1*p); g.fillStyle(0x000000, 1); g.fillRect(3*p, 2*p, 1*p, 1*p); g.fillRect(5*p, 2*p, 1*p, 1*p); g.generateTexture('enemy_small', 8*p, 6*p);
     g.clear(); g.fillStyle(0xaa00ff, 1); g.fillRect(1*p, 0*p, 6*p, 2*p); g.fillRect(2*p, 2*p, 4*p, 4*p); g.fillRect(1*p, 3*p, 1*p, 3*p); g.fillRect(6*p, 3*p, 1*p, 3*p); g.fillStyle(0xffffff, 1); g.fillRect(3*p, 2*p, 1*p, 1*p); g.fillRect(5*p, 2*p, 1*p, 1*p); g.generateTexture('enemy_medium', 8*p, 6*p);
     g.clear(); g.fillStyle(0xff0044, 1); g.fillRect(1*p, 1*p, 6*p, 5*p); g.fillRect(0*p, 2*p, 1*p, 3*p); g.fillRect(7*p, 2*p, 1*p, 3*p); g.fillStyle(0x000000, 1); g.fillRect(2*p, 2*p, 4*p, 2*p); g.generateTexture('enemy_tank', 8*p, 7*p);
     g.clear(); g.fillStyle(0x00ffff, 1); g.fillRect(3*p, 0*p, 2*p, 2*p); g.fillRect(1*p, 2*p, 6*p, 2*p); g.fillRect(0*p, 3*p, 1*p, 1*p); g.fillRect(7*p, 3*p, 1*p, 1*p); g.fillStyle(0x000000, 1); g.fillRect(3*p, 1*p, 1*p, 1*p); g.generateTexture('enemy_flyer', 8*p, 4*p);
 
-    // Босс
-    g.clear(); g.fillStyle(0x8800ff, 1); g.fillCircle(64, 64, 60); g.fillStyle(0xff0000, 1); g.fillCircle(40, 40, 15); g.fillCircle(88, 40, 15); g.fillCircle(64, 80, 20); g.generateTexture('enemy_boss', 128, 128);
+    // Босс (Жук-Танк)
+    g.clear(); 
+    g.fillStyle(0xff0044, 1); // Панцирь
+    g.fillRect(2*p, 2*p, 12*p, 10*p); 
+    g.fillStyle(0x990000, 1); // Темный панцирь
+    g.fillRect(4*p, 4*p, 8*p, 6*p);
+    g.fillStyle(0x000000, 1); // Жвала
+    g.fillRect(0*p, 6*p, 2*p, 4*p); g.fillRect(14*p, 6*p, 2*p, 4*p);
+    g.fillStyle(0xffff00, 1); // Глаза
+    g.fillRect(5*p, 5*p, 2*p, 2*p); g.fillRect(9*p, 5*p, 2*p, 2*p);
+    g.generateTexture('enemy_boss', 16*p, 16*p);
 
     // Магазин
     g.clear(); g.fillStyle(0xeeeeee, 1); g.fillRect(10, 20, 44, 40); g.fillStyle(0xdddddd, 1); g.fillTriangle(10, 20, 32, 0, 54, 20); g.fillStyle(0xff0000, 1); g.fillTriangle(10, 60, 10, 40, 0, 60); g.fillTriangle(54, 60, 54, 40, 64, 60); g.fillStyle(0x333333, 1); g.fillRect(24, 40, 16, 20); g.fillStyle(0xff0000, 1); g.fillRect(14, 24, 36, 10); g.generateTexture('shop_closed', 64, 64);
@@ -52,10 +61,8 @@ BootScene.prototype.create = function() {
     g.clear(); g.fillStyle(0xffaa00, 1); g.fillRect(0, 0, 8, 4); g.generateTexture('bullet_shotgun', 8, 4);
     g.clear(); g.fillStyle(0xff00ff, 1); g.fillRect(0, 0, 18, 3); g.generateTexture('bullet_rifle', 18, 3);
     
-    // ОГНЕМЕТ: Частица огня (вытянутая)
-    g.clear(); g.fillStyle(0xff5500, 1); g.fillRect(0, 0, 8, 6); 
-    g.fillStyle(0xffff00, 1); g.fillRect(0, 1, 4, 4); // Яркое ядро
-    g.generateTexture('bullet_flame', 8, 6);
+    // ОГНЕМЕТ: Частица огня
+    g.clear(); g.fillStyle(0xff5500, 1); g.fillRect(0, 0, 8, 6); g.fillStyle(0xffff00, 1); g.fillRect(0, 1, 4, 4); g.generateTexture('bullet_flame', 8, 6);
 
     g.clear(); g.fillStyle(0x00ffaa, 1); g.fillTriangle(10, 0, 20, 10, 10, 20); g.fillTriangle(10, 0, 0, 10, 10, 20); g.generateTexture('xp_gem', 20, 20);
     g.clear(); g.fillStyle(0xffcc00, 1); g.fillCircle(10, 10, 10); g.lineStyle(2, 0xffffff, 1); g.strokeCircle(10, 10, 6); g.generateTexture('coin', 20, 20);
@@ -149,7 +156,7 @@ let weaponStats = {
     pistol: { fireRate: 800, bulletCount: 1, spread: 0, damage: 2, color: 0x00ffff, speed: 600, maxAmmo: 12, reloadTime: 1000 },
     shotgun: { fireRate: 1200, bulletCount: 4, spread: 0.05, damage: 1.5, color: 0xffaa00, speed: 500, maxAmmo: 6, reloadTime: 1500 }, 
     rifle: { fireRate: 150, bulletCount: 1, spread: 0.05, damage: 1, color: 0xff00ff, speed: 800, maxAmmo: 30, reloadTime: 1500 },
-    flamethrower: { fireRate: 300, bulletCount: 1, spread: 0, damage: 0.5, color: 0xff5500, speed: 250, maxAmmo: 50, reloadTime: 2000 } // Огнемет: быстрый темп, малый урон, близко, много патронов
+    flamethrower: { fireRate: 300, bulletCount: 1, spread: 0, damage: 0.5, color: 0xff5500, speed: 250, maxAmmo: 50, reloadTime: 2000 }
 };
 let currentAmmo = 12, isReloading = false, reloadTimer = 0, ammoText, reloadBar;
 let shopPhaseTimer = 0, shopOpen = false;
@@ -198,6 +205,7 @@ GameScene.prototype.create = function() {
     this.cameras.main.startFollow(player, true, 0.1, 0.1);
     this.cameras.main.setZoom(0.7);
 
+    // ОГОНЬ РАНЦА (Возвращен)
     player.flameEmitter = this.add.particles(0, 0, 'flame', {
         speed: { min: 20, max: 50 }, scale: { start: 0.8, end: 0 }, lifespan: 200, frequency: 50, quantity: 2
     });
@@ -206,7 +214,7 @@ GameScene.prototype.create = function() {
 
     bullets = this.physics.add.group(); enemies = this.physics.add.group(); xpOrbs = this.physics.add.group(); coins = this.physics.add.group();
 
-    // Интерфейс
+    // --- ИНТЕРФЕЙС (Строго по углам) ---
     let ui = this.add.container(0, 0).setScrollFactor(0).setDepth(100);
     ui.add(this.add.rectangle(400, 20, 800, 40, 0x000000).setOrigin(0.5).setAlpha(0.8));
     xpBar = this.add.rectangle(0, 20, 0, 20, 0x00ffff).setOrigin(0, 0.5);
@@ -336,25 +344,21 @@ function shoot(scene) {
     let spread = s.spread;
     if (bulletCount > 1 && s.spread === 0) spread = 0.15; 
     
-    // Если огнемет - стреляем веером коротких частиц
     if (currentWeapon === 'flamethrower') {
         for (let i = 0; i < 4; i++) {
-            let off = (Math.random() - 0.5) * 0.4; // Случайный разброс струи
+            let off = (Math.random() - 0.5) * 0.4; 
             let b = bullets.create(player.x, player.y, 'bullet_flame');
             b.rotation = angle + off;
             b.damage = s.damage * bulletDamage;
             b.isFlame = true;
-            b.setScale(1 + Math.random()); // Разные размеры частиц
+            b.setScale(1 + Math.random()); 
             scene.physics.velocityFromRotation(angle + off, s.speed, b.body.velocity);
-            
-            // Огонь живет недолго
             scene.time.delayedCall(400, () => { if(b.active) b.destroy(); });
         }
         scene.cameras.main.shake(30, 0.001);
         return true;
     }
 
-    // Обычные пули
     for (let i = 0; i < count; i++) {
         let off = (i - (count - 1) / 2) * spread; 
         let b = bullets.create(player.x, player.y, s.bulletCount > 1 ? 'bullet_shotgun' : (currentWeapon === 'rifle' ? 'bullet_rifle' : 'bullet_pistol'));
@@ -399,10 +403,9 @@ function spawnBoss(scene) {
     currentBoss = b;
 }
 function hitEnemy(b, e) {
-    // Логика для огнемета (урон + поджигание)
     if (b.isFlame) {
         damageEnemy(this, e, b.damage);
-        e.setTint(0xff5500); // Враг горит
+        e.setTint(0xff5500); 
         this.time.delayedCall(200, () => { if(e.active) e.clearTint(); });
         b.destroy();
         return;
