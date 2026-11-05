@@ -57,7 +57,7 @@ BeachScene.prototype.create = function() {
     this.player.setCollideWorldBounds(true);
 
     // Создаем невидимую стену на границе песка и воды
-    this.wall = this.add.rectangle(1280, 896, 2560, 32, 0xff0000, 0); 
+this.wall = this.add.rectangle(1280, 1010, 2560, 32, 0xff0000, 0); 
     this.physics.add.existing(this.wall, true); 
 
     // ВОТ ЭТА СТРОЧКА ЗАСТАВЛЯЕТ ИГРОКА УПИРАТЬСЯ В СТЕНУ:
