@@ -3,7 +3,7 @@ const config = {
     width: 800,
     height: 600,
     parent: 'game',
-    backgroundColor: '#000000',
+    backgroundColor: '#87CEEB', // Небо
     scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
     scene: [BeachScene]
 };
@@ -15,30 +15,51 @@ BeachScene.prototype = Object.create(Phaser.Scene.prototype);
 BeachScene.prototype.constructor = BeachScene;
 
 BeachScene.prototype.preload = function() {
-    // Размер 128, как мы выяснили
+    // Размер 128 подтвержден
     this.load.spritesheet('tiles', 'beach.png', { frameWidth: 128, frameHeight: 128 });
 };
 
 BeachScene.prototype.create = function() {
-    // Выведем первые 30 тайлов сеткой
-    let tileSize = 64; // Рисуем их поменьше (64), чтобы влезло больше
-    let cols = 8; // 8 тайлов в ряд
+    let tileSize = 128;
+    let startX = 64; // Отступ слева
+    let startY = 0;  // Начинаем с самого верха
+
+    // У нас 800 пикселей в ширину. Один тайл 128. Значит, влезет 6 тайлов (6*128 = 768). 
+    // Остаток 32 пикселя оставим как отступ.
     
-    for (let i = 0; i < 30; i++) {
-        let x = (i % cols) * (tileSize + 10) + 50;
-        let y = Math.floor(i / cols) * (tileSize + 10) + 50;
-        
-        // Выводим тайл (уменьшенный)
-        let t = this.add.image(x, y, 'tiles', i).setOrigin(0);
-        t.setDisplaySize(tileSize, tileSize); // Уменьшаем до 64x64 для отображения
-        
-        // Пишем номер сверху
-        this.add.text(x + 2, y + 2, i.toString(), { 
-            fontFamily: 'Arial', fontSize: '16px', fill: '#ff0000', backgroundColor: '#ffffff' 
-        }).setOrigin(0);
+    let cols = 6;
+    let rows = 4; // 4 ряда по 128 = 512 пикселей в высоту. Остальное будет небо.
+
+    for (let y = 0; y < rows; y++) {
+        for (let x = 0; x < cols; x++) {
+            let tileIndex = 20; // По умолчанию - чистый песок
+
+            // 1. Верхний ряд (y=0) - Чистый песок
+            if (y === 0) {
+                tileIndex = 20; 
+            }
+            // 2. Второй ряд (y=1) - Переход (Пена)
+            else if (y === 1) {
+                // Берем тайл с пеной, который ровный (например, 3)
+                tileIndex = 3; 
+            }
+            // 3. Третий ряд (y=2) - Еще немного пены (чтобы волна была толще)
+            else if (y === 2) {
+                // Берем тайл с водой и пеной (например, 12)
+                tileIndex = 12; 
+            }
+            // 4. Четвертый ряд (y=3) - Чистая вода
+            else {
+                tileIndex = 26; 
+            }
+
+            // Добавляем тайл на сцену
+            this.add.image(startX + x * tileSize, startY + y * tileSize, 'tiles', tileIndex).setOrigin(0);
+        }
     }
     
-    this.add.text(400, 560, 'СКАЖИ НОМЕРА: ПЕСОК, ПЕНА, ВОДА', { 
-        fontFamily: 'Arial', fontSize: '20px', fill: '#fff', backgroundColor: '#000' 
+    // Добавим красивую надпись на "небе"
+    this.add.text(400, 550, 'БЕРЕГ ГОТОВ! ТЕПЕРЬ ДОБАВИМ ПИРС', { 
+        fontFamily: 'Arial', fontSize: '24px', fill: '#000', backgroundColor: '#fff' 
     }).setOrigin(0.5);
 };
