@@ -5,6 +5,7 @@ const config = {
     parent: 'game',
     backgroundColor: '#87CEEB',
     scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
+    physics: { default: 'arcade', arcade: { gravity: { y: 0 }, debug: false } },
     scene: [BeachScene]
 };
 
@@ -20,44 +21,76 @@ BeachScene.prototype.preload = function() {
 
 BeachScene.prototype.create = function() {
     let tileSize = 128;
-    // Смещаем карту чуть выше, чтобы освободить место для UI
-    let startX = -128; // Начнем чуть левее, чтобы заполнить экран
-    let startY = -128; 
+    let startX = 0; 
+    let startY = 0; 
 
-    // Делаем карту больше: 8 тайлов в ширину и 5 в высоту (8*128 = 1024, 5*128 = 640)
-    // Это больше экрана, так что будет ощущение простора.
-    let cols = 8;
-    let rows = 5; 
+    // УВЕЛИЧИЛИ КАРТУ: 12 тайлов в ширину (1536 пикс) и 8 в высоту (1024 пикс)
+    let cols = 12;
+    let rows = 8; 
 
     for (let y = 0; y < rows; y++) {
         for (let x = 0; x < cols; x++) {
-            let tileIndex = 20; // Песок по умолчанию
-            let flipY = false; // Нужно ли переворачивать тайл
+            let tileIndex = 20; // Песок
+            let flipY = false; 
 
-            // Верхние 2 ряда (y=0, y=1) - Чистый песок
-            if (y < 2) {
+            // Верхняя половина карты (y < 4) - Песок
+            if (y < 4) {
                 tileIndex = 20; 
             }
-            // 3-й ряд (y=2) - Переход (Пена), но перевернутый вниз
-            else if (y === 2) {
-                tileIndex = 3; // Берем тайл с пеной
-                flipY = true;  // ПЕРЕВОРАЧИВАЕМ его, чтобы пена смотрела вниз!
+            // Линия перехода (y === 4) - Пена
+            else if (y === 4) {
+                // Пробуем тайл 10 (должен быть ровным)
+                tileIndex = 10; 
+                // Если он смотрит не туда, мы попробуем 11 или 18. 
+                // Если пена должна смотреть вниз, а она смотрит вверх, оставляем flipY = true.
+                flipY = true; 
             }
-            // Остальные ряды (y=3, y=4) - Чистая вода
+            // Нижняя часть (y > 4) - Вода
             else {
                 tileIndex = 26; 
             }
 
-            // Добавляем тайл на сцену
             let tile = this.add.image(startX + x * tileSize, startY + y * tileSize, 'tiles', tileIndex).setOrigin(0);
             
             if (flipY) {
-                tile.setFlipY(true); // Переворачиваем по вертикали
+                tile.setFlipY(true); 
             }
         }
     }
     
-    this.add.text(400, 550, 'КАРТА СТАЛА БОЛЬШЕ! ПЕНА ПРАВИЛЬНО', { 
-        fontFamily: 'Arial', fontSize: '24px', fill: '#000', backgroundColor: '#fff' 
-    }).setOrigin(0.5);
+    // --- УСТАНАВЛИВАЕМ ГРАНИЦЫ МИРА И КАМЕРУ ---
+    this.physics.world.setBounds(0, 0, cols * tileSize, rows * tileSize);
+    this.cameras.main.setBounds(0, 0, cols * tileSize, rows * tileSize);
+
+    // Создаем невидимого игрока (пока просто точку), чтобы камера за ним следила
+    let player = this.physics.add.sprite(300, 200, null); // Поставили на песок
+    player.setCollideWorldBounds(true);
+    this.cameras.main.startFollow(player, true, 0.1, 0.1);
+
+    // Включаем управление для игрока (WASD)
+    this.cursors = this.input.keyboard.createCursorKeys();
+    this.keys = this.input.keyboard.addKeys('W,A,S,D');
+
+    // Чтобы игрок был виден, нарисуем на нем кружок (временно)
+    let graphics = this.make.graphics({x: 0, y: 0, add: false});
+    graphics.fillStyle(0xffffff, 1);
+    graphics.fillCircle(16, 16, 16);
+    graphics.generateTexture('player_dot', 32, 32);
+    player.setTexture('player_dot');
+
+    this.add.text(400, 550, 'ИСПОЛЬЗУЙ WASD ДЛЯ ДВИЖЕНИЯ', { 
+        fontFamily: 'Arial', fontSize: '20px', fill: '#000', backgroundColor: '#fff' 
+    }).setOrigin(0.5).setScrollFactor(0); // setScrollFactor(0) оставляет текст на месте
+};
+
+BeachScene.prototype.update = function() {
+    // Простое движение "игрока", чтобы камера ездила
+    let speed = 300;
+    if (this.cursors.left.isDown || this.keys.A.isDown) this.player.setVelocityX(-speed);
+    else if (this.cursors.right.isDown || this.keys.D.isDown) this.player.setVelocityX(speed);
+    else this.player.setVelocityX(0);
+
+    if (this.cursors.up.isDown || this.keys.W.isDown) this.player.setVelocityY(-speed);
+    else if (this.cursors.down.isDown || this.keys.S.isDown) this.player.setVelocityY(speed);
+    else this.player.setVelocityY(0);
 };
